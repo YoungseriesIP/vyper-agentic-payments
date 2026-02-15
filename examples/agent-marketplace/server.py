@@ -9,9 +9,9 @@ This demonstrates the full ERC-8004 agent pattern:
 3. Payment info available for reputation feedback
 
 Key circlekit concepts:
-  - create_gateway_middleware() sets up payment handling
-  - gateway.require('$0.01') protects routes with micropayments
-  - The decorated handler receives a `payment` kwarg after successful payment
+  - create_gateway_middleware() creates the middleware
+  - gateway.process_request() verifies & settles payments (framework-agnostic)
+  - Returns PaymentInfo on success, or a 402 dict when payment is needed
 
 Requires: SELLER_ADDRESS environment variable (receives payments)
 
@@ -19,8 +19,10 @@ Usage:
   SELLER_ADDRESS=0x... python examples/agent-marketplace/server.py
 """
 
+import asyncio
 import os
 import sys
+import threading
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
@@ -65,12 +67,13 @@ AGENT_METADATA = {
 }
 
 # ============================================================================
-# FLASK SETUP
+# FLASK SETUP + x402 ADAPTER
 # ============================================================================
 
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 
 from circlekit import create_gateway_middleware
+from circlekit.x402 import PaymentInfo
 
 app = Flask(__name__)
 
@@ -78,6 +81,44 @@ gateway = create_gateway_middleware(
     seller_address=SELLER_ADDRESS,
     chain="arcTestnet",
 )
+
+# Background event loop for async process_request() calls
+_loop = asyncio.new_event_loop()
+_loop_thread = threading.Thread(
+    target=lambda: (asyncio.set_event_loop(_loop), _loop.run_forever()),
+    daemon=True,
+)
+_loop_thread.start()
+
+
+def require_payment(price: str):
+    """
+    Flask adapter for circlekit's framework-agnostic process_request().
+
+    Returns PaymentInfo on success, or a Flask Response (402) if payment
+    is needed or failed.
+    """
+    payment_header = request.headers.get("Payment-Signature")
+    future = asyncio.run_coroutine_threadsafe(
+        gateway.process_request(
+            payment_header=payment_header,
+            path=request.path,
+            price=price,
+        ),
+        _loop,
+    )
+    result = future.result(timeout=10)
+
+    if isinstance(result, PaymentInfo):
+        return result
+
+    # 402 or error dict
+    resp = jsonify(result.get("body", result))
+    resp.status_code = result.get("status", 402)
+    for k, v in result.get("headers", {}).items():
+        resp.headers[k] = v
+    return resp
+
 
 # ============================================================================
 # FREE ENDPOINTS
@@ -110,14 +151,17 @@ def health():
 
 
 @app.route("/api/analyze")
-@gateway.require("$0.01")
-def analyze(payment):
+def analyze():
     """Data Analysis ($0.01) — protected by x402."""
-    print(f"[PAYMENT] Analyze request paid by {payment.payer}")
-    print(f"          Amount: {payment.amount}")
-    print(f"          Tx: {payment.transaction}")
+    result = require_payment("$0.01")
+    if not isinstance(result, PaymentInfo):
+        return result  # 402 response
 
-    return jsonify({
+    print(f"[PAYMENT] Analyze request paid by {result.payer}")
+    print(f"          Amount: {result.amount}")
+    print(f"          Tx: {result.transaction}")
+
+    resp = jsonify({
         "success": True,
         "service": "analyze",
         "result": {
@@ -131,30 +175,36 @@ def analyze(payment):
             ],
         },
         "payment": {
-            "amount": payment.amount,
-            "payer": payment.payer,
-            "transaction": payment.transaction,
+            "amount": result.amount,
+            "payer": result.payer,
+            "transaction": result.transaction,
         },
         "reputationHint": {
             "message": "Submit feedback with this transaction hash as proofOfPayment",
-            "proofOfPayment": payment.transaction,
+            "proofOfPayment": result.transaction,
         },
     })
+    for k, v in result.response_headers.items():
+        resp.headers[k] = v
+    return resp
 
 
 @app.route("/api/generate", methods=["POST"])
-@gateway.require("$0.05")
-def generate(payment):
+def generate():
     """Content Generation ($0.05) — protected by x402."""
+    result = require_payment("$0.05")
+    if not isinstance(result, PaymentInfo):
+        return result  # 402 response
+
     body = request.get_json(silent=True) or {}
     prompt = body.get("prompt", "default prompt")
     style = body.get("style", "professional")
 
-    print(f"[PAYMENT] Generate request paid by {payment.payer}")
+    print(f"[PAYMENT] Generate request paid by {result.payer}")
     print(f'          Prompt: "{prompt[:50]}..."')
-    print(f"          Tx: {payment.transaction}")
+    print(f"          Tx: {result.transaction}")
 
-    return jsonify({
+    resp = jsonify({
         "success": True,
         "service": "generate",
         "input": {"prompt": prompt, "style": style},
@@ -164,15 +214,18 @@ def generate(payment):
             "generatedAt": datetime.now(timezone.utc).isoformat(),
         },
         "payment": {
-            "amount": payment.amount,
-            "payer": payment.payer,
-            "transaction": payment.transaction,
+            "amount": result.amount,
+            "payer": result.payer,
+            "transaction": result.transaction,
         },
         "reputationHint": {
             "message": "Submit feedback with this transaction hash as proofOfPayment",
-            "proofOfPayment": payment.transaction,
+            "proofOfPayment": result.transaction,
         },
     })
+    for k, v in result.response_headers.items():
+        resp.headers[k] = v
+    return resp
 
 
 # ============================================================================

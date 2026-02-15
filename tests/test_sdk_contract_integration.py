@@ -4,8 +4,8 @@ Integration Test: circlekit SDK + Vyper Contracts
 Tests the full stack: Flask server with x402 middleware, GatewayClient
 payments, and Vyper contract interactions in the boa VM.
 
-This mirrors the pattern from circle-titanoboa-sdk/tests/test_circlekit_integration.py
-but adds contract interactions (deploy, register agents, record payment, feedback).
+The server uses circlekit's framework-agnostic process_request() API
+with a thin Flask adapter (the pattern recommended by the SDK).
 
 Run:
   pytest tests/test_sdk_contract_integration.py -v
@@ -15,12 +15,14 @@ Requires:
   pip install flask httpx pytest-asyncio
 """
 
-import os
-import sys
+import asyncio
 import threading
 import time
+from unittest.mock import AsyncMock
 
 import pytest
+
+from circlekit.facilitator import SettleResponse, VerifyResponse
 
 # Mark all tests in this module as integration
 pytestmark = pytest.mark.integration
@@ -94,16 +96,60 @@ def transferFrom(sender: address, recipient: address, amount: uint256) -> bool:
 
 @pytest.fixture(scope="module")
 def server_thread():
-    """Start a Flask server with x402 middleware in a background thread."""
-    from flask import Flask, jsonify, request
+    """Start a Flask server with x402 process_request() adapter in a background thread."""
+    from flask import Flask, Response, jsonify, request
 
     from circlekit import create_gateway_middleware
+    from circlekit.x402 import PaymentInfo
 
     app = Flask(__name__)
     gateway = create_gateway_middleware(
         seller_address="0x1234567890123456789012345678901234567890",
         chain="arcTestnet",
     )
+
+    # Replace the facilitator with a mock that always verifies and settles.
+    # This avoids real Gateway API calls during testing while still exercising
+    # the full process_request() → verify → settle pipeline.
+    mock_facilitator = AsyncMock()
+    mock_facilitator.verify.return_value = VerifyResponse(is_valid=True)
+    mock_facilitator.settle.return_value = SettleResponse(
+        success=True, transaction="0xmock_tx_integration_test"
+    )
+    gateway._facilitator = mock_facilitator
+
+    # Shared event loop for async process_request() calls from sync Flask handlers
+    loop = asyncio.new_event_loop()
+
+    def _run_loop():
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
+
+    loop_thread = threading.Thread(target=_run_loop, daemon=True)
+    loop_thread.start()
+
+    def require_payment(price: str):
+        """Flask adapter for circlekit's framework-agnostic process_request()."""
+        payment_header = request.headers.get("Payment-Signature")
+        future = asyncio.run_coroutine_threadsafe(
+            gateway.process_request(
+                payment_header=payment_header,
+                path=request.path,
+                price=price,
+            ),
+            loop,
+        )
+        result = future.result(timeout=10)
+
+        if isinstance(result, PaymentInfo):
+            return result  # Success — caller handles it
+
+        # 402 or error dict
+        resp = jsonify(result.get("body", result))
+        resp.status_code = result.get("status", 402)
+        for k, v in result.get("headers", {}).items():
+            resp.headers[k] = v
+        return resp
 
     @app.route("/")
     def index():
@@ -114,24 +160,34 @@ def server_thread():
         return jsonify({"healthy": True})
 
     @app.route("/api/analyze")
-    @gateway.require("$0.01")
-    def analyze(payment):
-        return jsonify({
+    def analyze():
+        result = require_payment("$0.01")
+        if not isinstance(result, PaymentInfo):
+            return result  # 402 response
+        resp = jsonify({
             "success": True,
             "service": "analyze",
-            "paid_by": payment.payer,
-            "amount": payment.amount,
+            "paid_by": result.payer,
+            "amount": result.amount,
         })
+        for k, v in result.response_headers.items():
+            resp.headers[k] = v
+        return resp
 
     @app.route("/api/generate", methods=["POST"])
-    @gateway.require("$0.05")
-    def generate(payment):
-        return jsonify({
+    def generate():
+        result = require_payment("$0.05")
+        if not isinstance(result, PaymentInfo):
+            return result  # 402 response
+        resp = jsonify({
             "success": True,
             "service": "generate",
-            "paid_by": payment.payer,
-            "amount": payment.amount,
+            "paid_by": result.payer,
+            "amount": result.amount,
         })
+        for k, v in result.response_headers.items():
+            resp.headers[k] = v
+        return resp
 
     @app.route("/feedback", methods=["POST"])
     def feedback():
@@ -241,7 +297,7 @@ class TestHTTPEndpoints:
         assert result.status == 200
         assert result.data["success"] is True
         assert result.data["paid_by"] == client.address
-        assert result.formatted_amount == "$0.010000"
+        assert result.formatted_amount == "0.010000"
 
         await client.close()
 
@@ -270,12 +326,11 @@ class TestHTTPEndpoints:
             private_key="0x0000000000000000000000000000000000000000000000000000000000000001",
         )
 
-        # Free endpoint
+        # Free endpoint — does not require payment, so supported=False
         free_result = await client.supports(f"{server_thread}/")
-        assert free_result.supported is True
-        assert free_result.requirements is None
+        assert free_result.supported is False
 
-        # Paid endpoint
+        # Paid endpoint — returns 402 with Gateway batching option
         paid_result = await client.supports(f"{server_thread}/api/analyze")
         assert paid_result.supported is True
         assert paid_result.requirements is not None
