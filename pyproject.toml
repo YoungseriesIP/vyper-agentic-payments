@@ -25,6 +25,9 @@ dependencies = [
     "pytest>=8.0.0",
     "pytest-xdist>=3.5.0",
     "python-dotenv>=1.0.0",
+    # circlekit (Python x402 SDK) is required but installed from a local path:
+    #   pip install -e ../circle-titanoboa-sdk
+    # See: https://github.com/lufa23/circle-titanoboa-sdk
 ]
 
 [project.optional-dependencies]
@@ -48,9 +51,11 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+asyncio_mode = "auto"
 markers = [
     "integration: tests requiring circlekit SDK (flask server + GatewayClient)",
     "challenge: hackathon challenge verification tests",
+    "real_chain: end-to-end tests requiring a live Arc Testnet RPC connection",
 ]
 
 [tool.black]

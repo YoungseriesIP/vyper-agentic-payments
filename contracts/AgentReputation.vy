@@ -20,9 +20,9 @@ INTEGRATION WITH x402 BATCHING SDK:
     3. Client submits feedback to this contract with the hash as proofOfPayment
     4. Future clients can verify the feedback is backed by real economic activity
     
-    # ASSUMPTION: The 'transaction' field from PayResult (burn intent hash) is
-    # suitable as on-chain proof. This may be a settlement tx hash instead.
-    # TODO: Verify with Circle team the exact format of this proof.
+    # NOTE: The 'transaction' field from PayResult (burn intent hash) is used
+    # as on-chain proof. This may be a settlement tx hash instead — the exact
+    # format depends on Circle's Gateway implementation and may evolve.
 
 SCORING:
     - Scores are 0-100 (percentage scale)

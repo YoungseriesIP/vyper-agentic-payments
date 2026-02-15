@@ -61,7 +61,7 @@ This is the **first-ever Vyper implementation of ERC-8004** (Agent Identity, Rep
 | `examples/agent-marketplace/client.py` | GatewayClient buyer agent |
 | `examples/agent-marketplace/deposit.py` | Deposit USDC into Gateway |
 | `tests/test_sdk_contract_integration.py` | Integration tests: SDK + contracts |
-| `challenges/` | 4 hackathon challenges with verification tests |
+| `challenges/` | 5 hackathon challenges with verification tests |
 
 ## Quick Start
 
@@ -108,7 +108,7 @@ pytest tests/ -v -m "not integration and not challenge"
 # Run SDK integration tests (12 tests)
 pytest tests/test_sdk_contract_integration.py -v
 
-# Run hackathon challenge verification (15 tests, fail until completed)
+# Run hackathon challenge verification (20 tests, fail until completed)
 pytest tests/test_hackathon_challenges.py -v
 ```
 
@@ -213,7 +213,7 @@ See [examples/agent-marketplace/README.md](examples/agent-marketplace/README.md)
 
 ## Hackathon Challenges
 
-Four progressive challenges in `challenges/` let you learn the contracts hands-on:
+Five progressive challenges in `challenges/` let you learn the contracts hands-on:
 
 | Challenge | Difficulty | Contract | Task |
 |-----------|-----------|----------|------|
@@ -221,6 +221,7 @@ Four progressive challenges in `challenges/` let you learn the contracts hands-o
 | 2 | Medium | AgentReputation | Record interaction + submit feedback |
 | 3 | Medium-Hard | AgentEscrow | Create task + approve completion |
 | 4 | Hard | SpendingLimiter | Set up 3-tier spending limits |
+| 5 | Hard (Capstone) | circlekit + AgentReputation | Pay via x402 + record on-chain reputation |
 
 ```bash
 # Run verification tests (all should fail initially)
@@ -307,7 +308,8 @@ vyper-agentic-payments/
 │   ├── challenge_1_identity/
 │   ├── challenge_2_reputation/
 │   ├── challenge_3_escrow/
-│   └── challenge_4_spending/
+│   ├── challenge_4_spending/
+│   └── challenge_5_x402_payment/
 ├── tests/                   # Python test suite
 │   ├── test_agent_identity.py
 │   ├── test_agent_reputation.py

@@ -55,7 +55,7 @@ npm install
 The buyer must deposit USDC into Gateway before making gasless payments:
 
 ```bash
-PRIVATE_KEY=0x... npx tsx deposit.ts --amount 1
+PRIVATE_KEY=0x... python deposit.py --amount 1
 ```
 
 Expected output:

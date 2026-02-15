@@ -412,3 +412,213 @@ class TestChallenge4Spending:
         )
 
         assert limiter.totalSpent(funded_owner, agent) == 25 * 10**6
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CHALLENGE 5: x402 Payment + On-Chain Reputation (Capstone)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Valid 64-hex-char tx hash for bytes32 conversion
+MOCK_SETTLE_TX = "0xa1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+
+
+class TestChallenge5Payment:
+    """Verify Challenge 5: x402 payment + on-chain reputation (capstone)."""
+
+    @pytest.fixture(scope="class")
+    def x402_server(self):
+        """Start a Flask server with mocked x402 facilitator on port 4099."""
+        import asyncio
+        import threading
+        import time
+        from unittest.mock import AsyncMock
+
+        from flask import Flask, jsonify, request
+
+        from circlekit import create_gateway_middleware
+        from circlekit.facilitator import SettleResponse, VerifyResponse
+        from circlekit.x402 import PaymentInfo
+
+        app = Flask(__name__)
+        gateway = create_gateway_middleware(
+            seller_address="0x1234567890123456789012345678901234567890",
+            chain="arcTestnet",
+        )
+
+        # Replace the facilitator with a mock so no real Gateway API calls are made
+        mock_facilitator = AsyncMock()
+        mock_facilitator.verify.return_value = VerifyResponse(is_valid=True)
+        mock_facilitator.settle.return_value = SettleResponse(
+            success=True, transaction=MOCK_SETTLE_TX
+        )
+        gateway._facilitator = mock_facilitator
+
+        # Shared event loop for async process_request() calls from sync Flask handlers
+        loop = asyncio.new_event_loop()
+
+        def _run_loop():
+            asyncio.set_event_loop(loop)
+            loop.run_forever()
+
+        loop_thread = threading.Thread(target=_run_loop, daemon=True)
+        loop_thread.start()
+
+        def require_payment(price: str):
+            """Flask adapter for circlekit's framework-agnostic process_request()."""
+            payment_header = request.headers.get("Payment-Signature")
+            future = asyncio.run_coroutine_threadsafe(
+                gateway.process_request(
+                    payment_header=payment_header,
+                    path=request.path,
+                    price=price,
+                ),
+                loop,
+            )
+            result = future.result(timeout=10)
+
+            if isinstance(result, PaymentInfo):
+                return result
+
+            resp = jsonify(result.get("body", result))
+            resp.status_code = result.get("status", 402)
+            for k, v in result.get("headers", {}).items():
+                resp.headers[k] = v
+            return resp
+
+        @app.route("/api/analyze")
+        def analyze():
+            result = require_payment("$0.01")
+            if not isinstance(result, PaymentInfo):
+                return result
+            resp = jsonify({
+                "success": True,
+                "service": "analyze",
+                "paid_by": result.payer,
+                "amount": result.amount,
+            })
+            for k, v in result.response_headers.items():
+                resp.headers[k] = v
+            return resp
+
+        def run_server():
+            app.run(host="127.0.0.1", port=4099, debug=False, use_reloader=False)
+
+        thread = threading.Thread(target=run_server, daemon=True)
+        thread.start()
+        time.sleep(1)
+
+        yield "http://127.0.0.1:4099"
+
+    @pytest.fixture
+    def deployer(self):
+        return boa.env.generate_address("ch5_deployer")
+
+    @pytest.fixture
+    def identity(self):
+        return boa.load("contracts/AgentIdentity.vy")
+
+    @pytest.fixture
+    def reputation(self, identity, deployer):
+        with boa.env.prank(deployer):
+            return boa.load("contracts/AgentReputation.vy", identity.address)
+
+    @pytest.fixture
+    def agent_owner(self):
+        return boa.env.generate_address("ch5_agent_owner")
+
+    @pytest.fixture
+    def client(self):
+        return boa.env.generate_address("ch5_client")
+
+    @pytest.fixture
+    def agent_id(self, identity, agent_owner):
+        with boa.env.prank(agent_owner):
+            return identity.registerAgent("ipfs://QmChallenge5Agent")
+
+    @pytest.fixture
+    def private_key(self):
+        return "0x0000000000000000000000000000000000000000000000000000000000000001"
+
+    @pytest.mark.asyncio
+    async def test_pay_and_record_returns_valid_result(
+        self, x402_server, private_key, reputation, identity, agent_id, agent_owner, client
+    ):
+        """Challenge 5: pay_and_record_reputation() should return a dict with all 7 keys."""
+        from challenge_5_x402_payment.challenge import pay_and_record_reputation
+
+        result = await pay_and_record_reputation(
+            x402_server, private_key, reputation, identity,
+            agent_id, agent_owner, client, score=85,
+        )
+
+        assert isinstance(result, dict)
+        for key in ("payer", "amount", "tx", "data", "supported", "feedback_id", "proof"):
+            assert key in result, f"Missing key: {key}"
+
+    @pytest.mark.asyncio
+    async def test_payment_fields_correct(
+        self, x402_server, private_key, reputation, identity, agent_id, agent_owner, client
+    ):
+        """Payer address, amount, and supported flag should be correct."""
+        from challenge_5_x402_payment.challenge import pay_and_record_reputation
+
+        result = await pay_and_record_reputation(
+            x402_server, private_key, reputation, identity,
+            agent_id, agent_owner, client, score=85,
+        )
+
+        # Private key 0x...0001 → address 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf
+        assert result["payer"].lower() == "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+        assert result["amount"] == "0.010000"
+        assert result["supported"] is True
+
+    @pytest.mark.asyncio
+    async def test_feedback_recorded_onchain(
+        self, x402_server, private_key, reputation, identity, agent_id, agent_owner, client
+    ):
+        """On-chain reputation state should reflect the feedback."""
+        from challenge_5_x402_payment.challenge import pay_and_record_reputation
+
+        await pay_and_record_reputation(
+            x402_server, private_key, reputation, identity,
+            agent_id, agent_owner, client, score=85,
+        )
+
+        assert reputation.hasClientInteracted(agent_id, client) is True
+        assert reputation.hasClientRated(agent_id, client) is True
+        assert reputation.getAverageScore(agent_id) == 8500
+        assert reputation.getTotalFeedbackCount(agent_id) == 1
+
+    @pytest.mark.asyncio
+    async def test_feedback_id_valid(
+        self, x402_server, private_key, reputation, identity, agent_id, agent_owner, client
+    ):
+        """feedback_id should be a valid on-chain ID (>= 1)."""
+        from challenge_5_x402_payment.challenge import pay_and_record_reputation
+
+        result = await pay_and_record_reputation(
+            x402_server, private_key, reputation, identity,
+            agent_id, agent_owner, client, score=85,
+        )
+
+        assert isinstance(result["feedback_id"], int)
+        assert result["feedback_id"] >= 1
+
+    @pytest.mark.asyncio
+    async def test_proof_matches_tx_hash(
+        self, x402_server, private_key, reputation, identity, agent_id, agent_owner, client
+    ):
+        """proof should be the tx hash converted to bytes32, matching on-chain storage."""
+        from challenge_5_x402_payment.challenge import pay_and_record_reputation
+
+        result = await pay_and_record_reputation(
+            x402_server, private_key, reputation, identity,
+            agent_id, agent_owner, client, score=85,
+        )
+
+        expected_proof = bytes.fromhex(MOCK_SETTLE_TX[2:])
+        assert result["proof"] == expected_proof
+
+        # Verify on-chain storage matches
+        feedback = reputation.getFeedback(result["feedback_id"])
+        assert feedback[4] == expected_proof

@@ -158,7 +158,7 @@ vyper-agentic-payments/
 │   └── agent-marketplace/    # x402 integration demo
 │       ├── server.ts         # Express + paywall
 │       ├── client.ts         # Payment client
-│       └── deposit.ts        # Gateway deposit
+│       └── deposit.py        # Gateway deposit
 ├── artifacts/                 # Compiled ABIs + bytecode
 ├── docs/                      # Documentation
 └── README.md                  # This file

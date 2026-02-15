@@ -137,31 +137,38 @@ def onERC721Received(
 # FIXTURES
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@pytest.fixture(scope="session")
+@pytest.fixture(autouse=True, scope="module")
+def reset_boa_env():
+    """Reset boa VM state before each test module to prevent cross-file contamination."""
+    boa.reset_env()
+    yield
+
+
+@pytest.fixture
 def deployer():
     """The main deployer account."""
     return boa.env.generate_address("deployer")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def alice():
     """Test account: Alice (agent owner)."""
     return boa.env.generate_address("alice")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def bob():
     """Test account: Bob (another agent owner)."""
     return boa.env.generate_address("bob")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def charlie():
     """Test account: Charlie (client/reviewer)."""
     return boa.env.generate_address("charlie")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def operator():
     """Test account: Operator (approved for all)."""
     return boa.env.generate_address("operator")

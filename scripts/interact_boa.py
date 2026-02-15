@@ -18,6 +18,7 @@ from pathlib import Path
 
 import boa
 from dotenv import load_dotenv
+from eth_account import Account
 
 load_dotenv()
 
@@ -29,7 +30,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONTRACTS_DIR = PROJECT_ROOT / "contracts"
 DEPLOYMENTS_FILE = PROJECT_ROOT / "deployments.json"
 
-ARC_TESTNET_RPC = os.getenv("ARC_TESTNET_RPC", "https://rpc.testnet.arc.circle.com")
+ARC_TESTNET_RPC = os.getenv("ARC_TESTNET_RPC", "https://arc-testnet.drpc.org")
 ARC_TESTNET_CHAIN_ID = str(int(os.getenv("ARC_TESTNET_CHAIN_ID", "5042002")))
 
 
@@ -69,7 +70,8 @@ def main() -> None:
 
     # Configure boa for Arc Testnet
     boa.set_network_env(ARC_TESTNET_RPC)
-    boa.env.add_account(boa.env.generate_address("user"), private_key)
+    account = Account.from_key(private_key)
+    boa.env.add_account(account, force_eoa=True)
 
     deployments = load_deployments()
     chain_deployments = deployments.get(ARC_TESTNET_CHAIN_ID, {})

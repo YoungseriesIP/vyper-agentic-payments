@@ -19,6 +19,7 @@ pip install -e ".[integration]"
 | 2 | Reputation Feedback | Medium | `AgentReputation.vy` | Record interaction + submit feedback with `submitFeedback()` |
 | 3 | Escrow Task | Medium-Hard | `AgentEscrow.vy` | Create a task with `createTask()` + approve with `approveCompletion()` |
 | 4 | Spending Limits | Hard | `SpendingLimiter.vy` | Authorize an agent and call `spend()` with 3-tier limits |
+| 5 | x402 Payment + Reputation | Hard (Capstone) | `circlekit` SDK + `AgentReputation.vy` | Pay via `GatewayClient.pay()` + record on-chain reputation feedback |
 
 ## How It Works
 
