@@ -15,6 +15,12 @@ from pathlib import Path
 import pytest
 import boa
 
+try:
+    import circlekit  # noqa: F401
+    HAS_CIRCLEKIT = True
+except ImportError:
+    HAS_CIRCLEKIT = False
+
 # Mark all tests in this module as challenge
 pytestmark = pytest.mark.challenge
 
@@ -361,7 +367,7 @@ class TestChallenge4Spending:
             recipient=recipient,
         )
 
-        # Should not raise — if we get here, the spend succeeded
+        # Should not raise. If we get here, the spend succeeded.
 
     def test_recipient_received_usdc(self, limiter, usdc, funded_owner, agent, recipient):
         """Recipient should receive the spent USDC."""
@@ -422,6 +428,7 @@ class TestChallenge4Spending:
 MOCK_SETTLE_TX = "0xa1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
 
 
+@pytest.mark.skipif(not HAS_CIRCLEKIT, reason="circlekit not installed")
 class TestChallenge5Payment:
     """Verify Challenge 5: x402 payment + on-chain reputation (capstone)."""
 

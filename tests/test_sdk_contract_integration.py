@@ -22,14 +22,21 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from circlekit.facilitator import SettleResponse, VerifyResponse
+try:
+    from circlekit.facilitator import SettleResponse, VerifyResponse
+    HAS_CIRCLEKIT = True
+except ImportError:
+    HAS_CIRCLEKIT = False
 
 # Mark all tests in this module as integration
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(not HAS_CIRCLEKIT, reason="circlekit not installed"),
+]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CONTRACT HELPERS (boa VM — no network needed)
+# CONTRACT HELPERS (boa VM, no network needed)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 MOCK_USDC_SOURCE = """
@@ -142,7 +149,7 @@ def server_thread():
         result = future.result(timeout=10)
 
         if isinstance(result, PaymentInfo):
-            return result  # Success — caller handles it
+            return result  # Success; caller handles it
 
         # 402 or error dict
         resp = jsonify(result.get("body", result))
@@ -326,11 +333,11 @@ class TestHTTPEndpoints:
             private_key="0x0000000000000000000000000000000000000000000000000000000000000001",
         )
 
-        # Free endpoint — does not require payment, so supported=False
+        # Free endpoint: does not require payment, so supported=False
         free_result = await client.supports(f"{server_thread}/")
         assert free_result.supported is False
 
-        # Paid endpoint — returns 402 with Gateway batching option
+        # Paid endpoint: returns 402 with Gateway batching option
         paid_result = await client.supports(f"{server_thread}/api/analyze")
         assert paid_result.supported is True
         assert paid_result.requirements is not None
