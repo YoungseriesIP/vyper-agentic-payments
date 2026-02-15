@@ -2,7 +2,7 @@
 
 **Vyper smart contracts for agentic payment workflows on Circle's Arc chain, integrated with [circlekit](https://github.com/lufa23/circle-titanoboa-sdk) (Python x402 Batching SDK).**
 
-[![Tests](https://img.shields.io/badge/tests-185%20passing-success)](./tests)
+[![Tests](https://img.shields.io/badge/tests-202%20passing-success)](./tests)
 [![Vyper](https://img.shields.io/badge/vyper-0.4.x-blue)](https://vyperlang.org)
 [![Arc Testnet](https://img.shields.io/badge/chain-Arc%20Testnet-purple)](https://developers.circle.com/w3s/arc)
 
@@ -39,7 +39,7 @@ This is the **first-ever Vyper implementation of ERC-8004** (Agent Identity, Rep
 
 ## What's Included
 
-### Smart Contracts (7 total, 185 tests)
+### Smart Contracts (7 total, 202 tests)
 
 | Contract | Purpose | Tests |
 |----------|---------|-------|
@@ -68,7 +68,6 @@ This is the **first-ever Vyper implementation of ERC-8004** (Agent Identity, Rep
 ### Prerequisites
 
 - Python 3.10+
-- Vyper 0.4.x (`pip install vyper`)
 - [circlekit](https://github.com/lufa23/circle-titanoboa-sdk) (Python x402 SDK)
 
 ### Installation
@@ -80,29 +79,24 @@ git clone https://github.com/lufa23/circle-titanoboa-sdk.git
 
 cd vyper-agentic-payments
 
-# Install Python dependencies
-pip install vyper titanoboa pytest
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install the project and its dependencies
+pip install -e .
 
 # Install circlekit from the local SDK
 pip install -e ../circle-titanoboa-sdk
 
-# Install integration test dependencies
-pip install flask httpx pytest-asyncio
-```
-
-### Configure Environment
-
-```bash
-cp .env.example .env
-# Edit .env with your keys:
-# - PRIVATE_KEY (funded wallet for deployment)
-# - SELLER_ADDRESS (receives payments)
+# Install integration test dependencies (Flask, httpx, etc.)
+pip install -e ".[integration]"
 ```
 
 ### Run Tests
 
 ```bash
-# Run all contract tests (185 tests)
+# Run all contract tests (202 tests)
 pytest tests/ -v -m "not integration and not challenge"
 
 # Run SDK integration tests (12 tests)
@@ -110,6 +104,29 @@ pytest tests/test_sdk_contract_integration.py -v
 
 # Run hackathon challenge verification (20 tests, fail until completed)
 pytest tests/test_hackathon_challenges.py -v
+```
+
+### Start Here: Hackathon Challenges
+
+**Challenges 1-4 run in titanoboa's local VM — no `.env`, no wallet, no testnet USDC needed.**
+
+Open `challenges/challenge_1_identity/challenge.py` and follow the instructions inside. Then verify:
+
+```bash
+pytest tests/test_hackathon_challenges.py -v -k "challenge_1"
+```
+
+Work through all five challenges in order. See [challenges/README.md](challenges/README.md) for full instructions.
+
+### Configure Environment
+
+> **Note:** You only need a `.env` file for deploying to Arc Testnet and running the agent marketplace example. The hackathon challenges (1-4) and all contract tests work without it.
+
+```bash
+cp .env.example .env
+# Edit .env with your keys:
+# - PRIVATE_KEY (funded wallet for deployment)
+# - SELLER_ADDRESS (receives payments)
 ```
 
 ### Deploy to Arc Testnet
@@ -136,26 +153,48 @@ This project uses [circlekit](https://github.com/lufa23/circle-titanoboa-sdk), a
 The SDK's middleware is framework-agnostic. Here's the Flask adapter pattern used in this project:
 
 ```python
+import asyncio
+import threading
+
+from flask import Flask, jsonify, request
+
 from circlekit import create_gateway_middleware
 from circlekit.x402 import PaymentInfo
+
+app = Flask(__name__)
 
 gateway = create_gateway_middleware(
     seller_address="0x...",
     chain="arcTestnet",
 )
 
+# Background event loop for async process_request() calls
+_loop = asyncio.new_event_loop()
+_thread = threading.Thread(
+    target=lambda: (asyncio.set_event_loop(_loop), _loop.run_forever()),
+    daemon=True,
+)
+_thread.start()
+
+
 def require_payment(price: str):
     """Flask adapter for circlekit's process_request()."""
     payment_header = request.headers.get("Payment-Signature")
-    result = await gateway.process_request(
-        payment_header=payment_header,
-        path=request.path,
-        price=price,
+    future = asyncio.run_coroutine_threadsafe(
+        gateway.process_request(
+            payment_header=payment_header,
+            path=request.path,
+            price=price,
+        ),
+        _loop,
     )
+    result = future.result(timeout=10)
+
     if isinstance(result, PaymentInfo):
         return result  # Payment succeeded
     # Return 402 response
     return jsonify(result["body"]), result["status"]
+
 
 @app.route("/api/analyze")
 def analyze():
@@ -168,20 +207,22 @@ def analyze():
 ### Client-side (making payments)
 
 ```python
+import asyncio
 from circlekit import GatewayClient
 
-client = GatewayClient(
-    chain="arcTestnet",
-    private_key="0x...",
-)
 
-# Deposit USDC into Gateway (one-time setup)
-await client.deposit(amount=1.0)
+async def main():
+    async with GatewayClient(chain="arcTestnet", private_key="0x...") as client:
+        # Deposit USDC into Gateway (one-time setup)
+        await client.deposit(amount=1.0)
 
-# Pay for a resource (gasless!)
-result = await client.pay("http://localhost:4021/api/analyze")
-print(result.data)  # Server response
-print(result.formatted_amount)  # "0.010000"
+        # Pay for a resource (gasless!)
+        result = await client.pay("http://localhost:4021/api/analyze")
+        print(result.data)  # Server response
+        print(result.formatted_amount)  # "0.010000"
+
+
+asyncio.run(main())
 ```
 
 ## Agent Marketplace Example

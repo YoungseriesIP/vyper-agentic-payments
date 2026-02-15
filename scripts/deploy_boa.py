@@ -4,8 +4,7 @@ deploy_boa.py
 Deploy Vyper contracts to Arc Testnet using titanoboa.
 No compilation step needed — boa.load() compiles and deploys in one call.
 
-Fixes the constructor arg bug in deploy-viem.ts:
-  AgentEscrow expects (usdc_address, identity_registry), NOT the reverse.
+Note: AgentEscrow expects (usdc_address, identity_registry), NOT the reverse.
 
 Prerequisites:
   - PRIVATE_KEY environment variable (with 0x prefix)
@@ -71,7 +70,7 @@ def get_constructor_args(contract_name: str, deployments: dict, chain_id: str) -
     Return constructor arguments for a contract.
 
     IMPORTANT: AgentEscrow takes (usdc_address, identity_registry) in that order.
-    The original deploy-viem.ts had this backwards (identity first, then USDC).
+    Note: the order is usdc_address first, then identity_registry.
     """
     args = []
 

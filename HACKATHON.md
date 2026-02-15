@@ -6,7 +6,7 @@
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 This project provides a complete smart contract infrastructure for AI agents to:
 - **Register identities** as ERC-721 NFTs
@@ -23,7 +23,7 @@ This project provides a complete smart contract infrastructure for AI agents to:
 
 ---
 
-## 📊 Technical Highlights
+## Technical Highlights
 
 ### Contracts Delivered
 
@@ -37,46 +37,49 @@ This project provides a complete smart contract infrastructure for AI agents to:
 | PaymentSplitter | 267 | 15 | 27 |
 | SubscriptionManager | 312 | 16 | 27 |
 
-**Total: ~1,958 lines of Vyper, 185 tests**
+**Total: ~1,958 lines of Vyper, 202 tests**
 
 ### x402 Integration
 
-The project includes a complete TypeScript integration with Circle's x402 Batching SDK:
+The project includes a complete Python integration with Circle's x402 Batching SDK via [circlekit](https://github.com/lufa23/circle-titanoboa-sdk):
 
-```typescript
-// Server-side paywall
-const gateway = createGatewayMiddleware({ sellerAddress: SELLER });
-app.get('/api/analyze', gateway.require('$0.01'), analyzeHandler);
+```python
+# Server-side paywall (Flask + circlekit)
+gateway = create_gateway_middleware(seller_address=SELLER, chain="arcTestnet")
 
-// Client-side payment
-const gateway = new GatewayClient({ chain: 'arcTestnet', privateKey });
-const result = await gateway.pay<AnalysisResult>(url);
+@app.route("/api/analyze")
+def analyze():
+    result = require_payment("$0.01")
+    if not isinstance(result, PaymentInfo):
+        return result
+    return jsonify({"data": "analysis result", "paid_by": result.payer})
+
+# Client-side payment
+async with GatewayClient(chain="arcTestnet", private_key=KEY) as client:
+    result = await client.pay("http://localhost:4021/api/analyze")
 ```
 
-### Deployment Ready
+### Deployment
 
 ```bash
-# Compile contracts
-npm run compile
-
-# Deploy to Arc Testnet
-npm run deploy
+# Deploy to Arc Testnet via titanoboa
+python scripts/deploy_boa.py
 
 # All 7 contracts deployed with dependency management
 ```
 
 ---
 
-## 🚀 Demo Scenarios
+## Demo Scenarios
 
 ### 1. Agent Marketplace
 
 An AI agent sells sentiment analysis services:
 
-1. Agent registers identity → gets NFT #1
+1. Agent registers identity -> gets NFT #1
 2. Client discovers agent, pays $0.01 via x402
 3. Agent delivers analysis, client submits feedback
-4. Agent reputation increases → attracts more clients
+4. Agent reputation increases -> attracts more clients
 
 ### 2. Multi-Agent Collaboration
 
@@ -98,14 +101,14 @@ Enterprise deploys AI agents with spending controls:
 
 ---
 
-## 🔧 Technical Architecture
+## Technical Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    APPLICATION LAYER                         │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │         examples/agent-marketplace/                     │ │
-│  │  server.ts (Express + x402)  ←→  client.ts (Gateway)   │ │
+│  │  server.py (Flask + x402)  <->  client.py (Gateway)    │ │
 │  └─────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                    SMART CONTRACT LAYER                      │
@@ -137,7 +140,7 @@ Enterprise deploys AI agents with spending controls:
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 vyper-agentic-payments/
@@ -149,24 +152,23 @@ vyper-agentic-payments/
 │   ├── SpendingLimiter.vy    # Agent spending controls
 │   ├── PaymentSplitter.vy    # Revenue distribution
 │   └── SubscriptionManager.vy # Recurring payments
-├── tests/                     # 185 Python tests
-├── scripts/                   # TypeScript tooling
-│   ├── compile-vyper.ts      # Contract compilation
-│   ├── deploy-viem.ts        # Deployment script
-│   └── interact.ts           # Contract interaction
+├── tests/                     # 202 Python tests
+├── scripts/                   # Python tooling
+│   ├── deploy_boa.py         # Deploy via titanoboa
+│   └── interact_boa.py       # Contract interaction
 ├── examples/
 │   └── agent-marketplace/    # x402 integration demo
-│       ├── server.ts         # Express + paywall
-│       ├── client.ts         # Payment client
+│       ├── server.py         # Flask + x402 paywall
+│       ├── client.py         # GatewayClient buyer
 │       └── deposit.py        # Gateway deposit
-├── artifacts/                 # Compiled ABIs + bytecode
+├── challenges/                # 5 hackathon challenges
 ├── docs/                      # Documentation
-└── README.md                  # This file
+└── README.md
 ```
 
 ---
 
-## 🎓 What We Learned
+## What We Learned
 
 1. **Vyper + Circle = Perfect Match** - Gas efficiency matters for micropayments
 2. **x402 SDK is Production-Ready** - Seamless integration
@@ -175,7 +177,7 @@ vyper-agentic-payments/
 
 ---
 
-## 🔮 Future Roadmap
+## Future Roadmap
 
 - [ ] Mainnet deployment on Arc
 - [ ] Agent-to-agent direct payments
@@ -185,26 +187,26 @@ vyper-agentic-payments/
 
 ---
 
-## 👥 Team
+## Team
 
 **Luca Fumagalli** - Solo developer
 - Vyper smart contracts
-- TypeScript SDK integration
+- Python SDK integration
 - Testing & documentation
 
 ---
 
-## 📞 Contact
+## Contact
 
 - GitHub: [@lufa23](https://github.com/lufa23)
 - Repository: [vyper-agentic-payments](https://github.com/lufa23/vyper-agentic-payments)
 
 ---
 
-## 📄 License
+## License
 
 MIT License - Open source, free to use and extend.
 
 ---
 
-*Built with ❤️ for the Circle Hackathon*
+*Built for the Circle Hackathon*

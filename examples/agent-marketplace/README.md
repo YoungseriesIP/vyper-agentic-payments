@@ -11,8 +11,9 @@ This example demonstrates the full ERC-8004 agentic payment flow:
 
 ## Prerequisites
 
-- Node.js >= 18
-- Cloudsmith token (for `@circlefin/x402-batching`)
+- Python 3.10+
+- circlekit installed (`pip install -e ../circle-titanoboa-sdk` from repo root)
+- Integration dependencies (`pip install -e ".[integration]"` from repo root)
 - EVM private key for the client (buyer)
 - Testnet USDC on Arc Testnet
 
@@ -36,7 +37,7 @@ Edit `.env`:
 # Seller's wallet address (receives payments)
 SELLER_ADDRESS=0xYourSellerAddressHere
 
-# Buyer's private key (for client.ts)
+# Buyer's private key (for client.py)
 PRIVATE_KEY=0xYourPrivateKeyHere
 
 # Server port (optional, default 4021)
@@ -47,7 +48,9 @@ PORT=4021
 
 From the repo root:
 ```bash
-npm install
+pip install -e .
+pip install -e ../circle-titanoboa-sdk
+pip install -e ".[integration]"
 ```
 
 ### 3. Deposit USDC to Gateway (One-Time Setup)
@@ -70,13 +73,13 @@ Chain: Arc Testnet
    Gateway Available: 0.000000
 
 2. Depositing 1 USDC...
-   ✅ Tx: 0x...
+   Tx: 0x...
 
 3. Updated balances:
    Wallet USDC: 9.000000
    Gateway Available: 1.000000
 
-✅ Done! You can now make gasless payments.
+Done! You can now make gasless payments.
 ```
 
 ## Running the Example
@@ -86,14 +89,14 @@ You'll need **two terminals**.
 ### Terminal 1: Start the Agent Server
 
 ```bash
-SELLER_ADDRESS=0x... npx tsx server.ts
+SELLER_ADDRESS=0x... python examples/agent-marketplace/server.py
 ```
 
 Expected output:
 ```
-╔════════════════════════════════════════════════════════════════╗
-║        Agent Marketplace - x402 Seller Example                 ║
-╚════════════════════════════════════════════════════════════════╝
+================================================================
+  Agent Marketplace - x402 Seller (circlekit)
+================================================================
 
 Server:    http://localhost:4021
 Agent:     DataAnalyzer-v1
@@ -110,18 +113,18 @@ Endpoints:
 ### Terminal 2: Run the Buyer Client
 
 ```bash
-PRIVATE_KEY=0x... npx tsx client.ts
+PRIVATE_KEY=0x... python examples/agent-marketplace/client.py
 ```
 
 Expected output:
 ```
-╔════════════════════════════════════════════════════════════════╗
-║        Agent Marketplace - x402 Buyer Client                   ║
-╚════════════════════════════════════════════════════════════════╝
+================================================================
+  Agent Marketplace - x402 Buyer Client (circlekit)
+================================================================
 
 1. Creating Gateway client...
    Address: 0x...
-   Chain: Arc Testnet
+   Chain:   Arc Testnet
 
 2. Checking balances...
    Wallet USDC:  9.000000
@@ -130,16 +133,16 @@ Expected output:
 3. Discovering agent...
    Agent: DataAnalyzer-v1
    Capabilities: data-analysis, content-generation, summarization
-   x402 Support: ✅ Yes
+   x402 Support: Yes
 
 4. Checking agent reputation...
-   📝 [SIMULATED] Would query AgentReputation.vy on-chain
+   [SIMULATED] Would query AgentReputation.vy on-chain
 
 5. Checking x402 support...
-   ✅ Server supports Gateway batching
+   Server supports Gateway batching
 
 6. Paying for /api/analyze ($0.01)...
-   ✅ Paid 0.010000 USDC (gasless!)
+   Paid 0.010000 USDC (gasless!)
    Transaction: 0x...
 
    Response from agent:
@@ -148,14 +151,14 @@ Expected output:
    - Insights: 3 found
 
 7. Submitting reputation feedback...
-   ✅ Feedback submitted
+   Feedback submitted
 
 8. Updated balances...
    Gateway: 0.990000 available
 
-╔════════════════════════════════════════════════════════════════╗
-║                        Complete!                               ║
-╚════════════════════════════════════════════════════════════════╝
+================================================================
+  Complete!
+================================================================
 ```
 
 ## Testing Without a Client
@@ -179,12 +182,12 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:4021/api/analyze
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| x402 Payment Negotiation | ✅ Real | HTTP 402 → sign → retry with Payment-Signature |
-| Gasless USDC Transfer | ✅ Real | No gas fees for payments |
-| Gateway Balance | ✅ Real | On-chain balance in Gateway contract |
-| Agent Discovery | 📝 Simulated | Would read from AgentIdentity.vy on-chain |
-| Reputation Query | 📝 Simulated | Would read from AgentReputation.vy on-chain |
-| Feedback Submission | 📝 Simulated | Would write to AgentReputation.vy on-chain |
+| x402 Payment Negotiation | Real | HTTP 402 -> sign -> retry with Payment-Signature |
+| Gasless USDC Transfer | Real | No gas fees for payments |
+| Gateway Balance | Real | On-chain balance in Gateway contract |
+| Agent Discovery | Simulated | Would read from AgentIdentity.vy on-chain |
+| Reputation Query | Simulated | Would read from AgentReputation.vy on-chain |
+| Feedback Submission | Simulated | Would write to AgentReputation.vy on-chain |
 
 ## Connecting to On-Chain Contracts
 
@@ -197,7 +200,7 @@ To make this fully on-chain, you would:
 5. **Record interactions** with `recordInteraction(agentId, clientAddress)`
 6. **Submit feedback** with `submitFeedback(agentId, score, comment, proofOfPayment)`
 
-See `scripts/deploy.ts` for deployment instructions.
+See `scripts/deploy_boa.py` for deployment instructions.
 
 ## Extending This Example
 

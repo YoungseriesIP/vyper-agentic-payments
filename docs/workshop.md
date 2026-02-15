@@ -18,14 +18,18 @@ git clone https://github.com/lufa23/circle-titanoboa-sdk.git
 
 cd vyper-agentic-payments
 
-# Install Python dependencies
-pip install vyper titanoboa pytest
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install the project and its dependencies
+pip install -e .
 
 # Install circlekit (Python x402 SDK) from local path
 pip install -e ../circle-titanoboa-sdk
 
-# Install integration test dependencies
-pip install flask httpx pytest-asyncio
+# Install integration test dependencies (Flask, httpx, etc.)
+pip install -e ".[integration]"
 ```
 
 ### 2. Configure Environment
@@ -58,18 +62,18 @@ Every agent needs an identity. Open `contracts/AgentIdentity.vy`:
 def registerAgent(metadataURI: String[256]) -> uint256:
     """
     Register a new agent. Mints an ERC-721 NFT to the caller.
-    
+
     @param metadataURI IPFS URI pointing to agent metadata
     @return agentId The unique identifier for this agent
     """
     agentId: uint256 = self.nextAgentId
     self.nextAgentId = agentId + 1
-    
+
     # Mint NFT to caller
     self._mint(msg.sender, agentId)
     self.tokenURIs[agentId] = metadataURI
     self.agentActive[agentId] = True
-    
+
     log AgentRegistered(agentId, msg.sender, metadataURI)
     return agentId
 ```
@@ -93,26 +97,26 @@ Agents earn reputation through feedback. Open `contracts/AgentReputation.vy`:
 ```python
 @external
 def submitFeedback(
-    agentId: uint256, 
-    score: uint256, 
+    agentId: uint256,
+    score: uint256,
     proofOfPayment: bytes32
 ) -> uint256:
     """
     Submit feedback for an agent. Requires prior interaction.
-    
+
     @param agentId The agent to rate
     @param score Rating from 0-100
     @param proofOfPayment Transaction hash proving payment occurred
     """
     # Must have interacted with agent
     assert self.hasInteracted[agentId][msg.sender], "No interaction recorded"
-    
+
     # Can only rate once
     assert not self.clientFeedbackGiven[msg.sender][agentId], "Already rated"
-    
+
     # Score must be valid
     assert score <= 100, "Score must be 0-100"
-    
+
     # Update reputation
     self.totalScore[agentId] += score
     self.feedbackCount[agentId] += 1
@@ -149,78 +153,106 @@ Client                    Server                   Gateway
 
 ### Build Your First Paywall
 
-Create `my-server.ts`:
+Create `my_server.py`:
 
-```typescript
-import express from 'express';
-import { createGatewayMiddleware } from '@circlefin/x402-batching/server';
+```python
+import asyncio
+import threading
 
-const app = express();
+from flask import Flask, jsonify, request
 
-// Create payment middleware
-const gateway = createGatewayMiddleware({
-  sellerAddress: process.env.SELLER_ADDRESS!,
-});
+from circlekit import create_gateway_middleware
+from circlekit.x402 import PaymentInfo
 
-// Free endpoint
-app.get('/', (req, res) => {
-  res.json({ status: 'ok' });
-});
+app = Flask(__name__)
 
-// Paywalled endpoint - $0.01 per request
-app.get('/api/hello', 
-  gateway.require('$0.01'), 
-  (req, res) => {
-    // req.payment contains payment details
-    res.json({ 
-      message: 'Hello, paying customer!',
-      paidAmount: req.payment.amount,
-    });
-  }
-);
+gateway = create_gateway_middleware(
+    seller_address="0x...",  # Set via SELLER_ADDRESS env var
+    chain="arcTestnet",
+)
 
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
-});
+# Background event loop for async process_request() calls
+_loop = asyncio.new_event_loop()
+_thread = threading.Thread(
+    target=lambda: (asyncio.set_event_loop(_loop), _loop.run_forever()),
+    daemon=True,
+)
+_thread.start()
+
+
+def require_payment(price: str):
+    """Flask adapter for circlekit's process_request()."""
+    payment_header = request.headers.get("Payment-Signature")
+    future = asyncio.run_coroutine_threadsafe(
+        gateway.process_request(
+            payment_header=payment_header,
+            path=request.path,
+            price=price,
+        ),
+        _loop,
+    )
+    result = future.result(timeout=10)
+    if isinstance(result, PaymentInfo):
+        return result
+    return jsonify(result.get("body", result)), result.get("status", 402)
+
+
+# Free endpoint
+@app.route("/")
+def index():
+    return jsonify({"status": "ok"})
+
+
+# Paywalled endpoint - $0.01 per request
+@app.route("/api/hello")
+def hello():
+    result = require_payment("$0.01")
+    if not isinstance(result, PaymentInfo):
+        return result
+    return jsonify({
+        "message": "Hello, paying customer!",
+        "paid_amount": result.amount,
+    })
+
+
+if __name__ == "__main__":
+    app.run(port=3000)
 ```
 
 ### Create the Client
 
-Create `my-client.ts`:
+Create `my_client.py`:
 
-```typescript
-import { GatewayClient } from '@circlefin/x402-batching/client';
+```python
+import asyncio
+from circlekit import GatewayClient
 
-async function main() {
-  // Initialize client
-  const gateway = new GatewayClient({
-    chain: 'arcTestnet',
-    privateKey: process.env.PRIVATE_KEY!,
-  });
 
-  // Check balance
-  const balances = await gateway.getBalances();
-  console.log('Balance:', balances);
+async def main():
+    async with GatewayClient(
+        chain="arcTestnet",
+        private_key="0x...",  # Set via PRIVATE_KEY env var
+    ) as gateway:
+        # Check balance
+        balances = await gateway.get_balances()
+        print("Balance:", balances.gateway.formatted_available)
 
-  // Make paid request
-  const result = await gateway.pay<{ message: string }>(
-    'http://localhost:3000/api/hello'
-  );
+        # Make paid request
+        result = await gateway.pay("http://localhost:3000/api/hello")
+        print("Response:", result.data)
 
-  console.log('Response:', result);
-}
 
-main();
+asyncio.run(main())
 ```
 
 ### Run it:
 
 ```bash
 # Terminal 1
-npx ts-node my-server.ts
+python my_server.py
 
 # Terminal 2
-npx ts-node my-client.ts
+python my_client.py
 ```
 
 ---
@@ -236,70 +268,63 @@ Let's build a complete agent that:
 ### Step 1: Deploy Contracts
 
 ```bash
-# Compile contracts
-npm run compile
-
-# Deploy (requires funded wallet)
-npm run deploy
+# Deploy to Arc Testnet (requires funded wallet)
+python scripts/deploy_boa.py
 ```
 
 ### Step 2: Register Your Agent
 
-Create `register-agent.ts`:
+Using titanoboa to interact with the deployed contract:
 
-```typescript
-import { createPublicClient, createWalletClient, http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { readFileSync } from 'fs';
+```python
+import boa
+import json
 
-const artifact = JSON.parse(
-  readFileSync('artifacts/AgentIdentity.json', 'utf-8')
-);
+# Load deployment info
+with open("deployments.json") as f:
+    deployments = json.load(f)
 
-async function main() {
-  const deployments = JSON.parse(
-    readFileSync('deployments.json', 'utf-8')
-  );
-  
-  const address = deployments['5042002']['AgentIdentity'].address;
-  
-  // Create clients...
-  // Call registerAgent with your metadata
-  
-  console.log('Agent registered!');
-}
+address = deployments["5042002"]["AgentIdentity"]["address"]
+
+# Load the contract
+identity = boa.load_partial("contracts/AgentIdentity.vy").at(address)
+
+# Register your agent
+agent_id = identity.registerAgent("ipfs://QmYourAgentMetadata...")
+print(f"Agent registered with ID: {agent_id}")
 ```
 
 ### Step 3: Offer Services
 
 Update your server to record interactions:
 
-```typescript
-app.get('/api/analyze',
-  gateway.require('$0.01'),
-  async (req, res) => {
-    // Record interaction on-chain
-    await recordInteraction(agentId, req.payment.payer);
-    
-    // Do the work
-    const result = analyzeText(req.query.text);
-    
-    res.json(result);
-  }
-);
+```python
+@app.route("/api/analyze")
+def analyze():
+    result = require_payment("$0.01")
+    if not isinstance(result, PaymentInfo):
+        return result
+
+    # Record interaction on-chain
+    reputation.recordInteraction(agent_id, result.payer)
+
+    # Do the work
+    analysis = analyze_text(request.args.get("text", ""))
+
+    return jsonify(analysis)
 ```
 
 ### Step 4: Build Reputation
 
 After clients receive service, they can submit feedback:
 
-```typescript
-// Client-side
-await submitFeedback(
-  agentId,
-  85, // Score out of 100
-  paymentTxHash
-);
+```python
+# Client-side
+reputation.submitFeedback(
+    agent_id,
+    85,  # Score out of 100
+    payment_tx_hash,
+)
 ```
 
 ---
