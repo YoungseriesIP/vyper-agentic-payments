@@ -22,6 +22,7 @@
  *   1. Start server: SELLER_ADDRESS=0x... npx tsx server.ts
  *   2. Run client: PRIVATE_KEY=0x... npx tsx client.ts
  */
+// x402 payment flow pattern based on Circle's x402 Batching SDK examples
 
 import { GatewayClient } from '@circlefin/x402-batching/client';
 import type { Hex } from 'viem';
@@ -117,7 +118,7 @@ async function main() {
 
   if (parseFloat(balances.gateway.formattedAvailable) < 0.01) {
     console.log('\n⚠️  Insufficient Gateway balance');
-    console.log('   Run: npx tsx deposit.ts --amount 1');
+    console.log('   Run: PRIVATE_KEY=0x... python deposit.py --amount 1');
     return;
   }
 

@@ -18,6 +18,7 @@
  * Usage:
  *   SELLER_ADDRESS=0x... npx tsx server.ts
  */
+// x402 payment flow pattern based on Circle's x402 Batching SDK examples
 
 import express from 'express';
 import { createGatewayMiddleware, type PaymentRequest } from '@circlefin/x402-batching/server';

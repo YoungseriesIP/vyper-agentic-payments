@@ -82,3 +82,6 @@ deployments.json
 
 # Lock files (contains private registry URLs)
 package-lock.json
+
+# NPM config (contains private registry URLs)
+.npmrc
