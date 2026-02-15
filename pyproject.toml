@@ -1,0 +1,62 @@
+[project]
+name = "vyper-agentic-payments"
+version = "0.1.0"
+description = "Vyper smart contracts for agentic payment workflows on Circle's Arc chain"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Luca Fumagalli", email = "luca@vyper.dev" }
+]
+keywords = ["vyper", "ethereum", "arc", "circle", "usdc", "agents", "erc-8004"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "vyper>=0.4.0",
+    "titanoboa>=0.2.0",
+    "pytest>=8.0.0",
+    "pytest-xdist>=3.5.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.0.0",
+    "isort>=5.13.0",
+]
+integration = [
+    "flask>=3.0.0",
+    "httpx>=0.27.0",
+    "pytest-asyncio>=0.23.0",
+    "eth-account>=0.11.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+markers = [
+    "integration: tests requiring circlekit SDK (flask server + GatewayClient)",
+    "challenge: hackathon challenge verification tests",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
