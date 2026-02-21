@@ -221,9 +221,15 @@ def contracts():
     usdc = boa.loads(MOCK_USDC_SOURCE)
 
     with boa.env.prank(deployer):
-        identity = boa.load("contracts/AgentIdentity.vy")
-        reputation = boa.load("contracts/AgentReputation.vy", identity.address)
-        validation = boa.load("contracts/AgentValidation.vy", identity.address)
+        identity = boa.load(
+            "lib/github/lufa23/erc-8004-vyper/src/identity_registry.vy",
+            "AgentIdentityRegistry",
+            "AGID",
+        )
+        reputation = boa.load(
+            "lib/github/lufa23/erc-8004-vyper/src/reputation_registry.vy",
+            identity.address,
+        )
         # FIXED arg order: usdc_address first, then identity_registry
         escrow = boa.load("contracts/AgentEscrow.vy", usdc.address, identity.address)
 
@@ -369,13 +375,6 @@ class TestContractDeployment:
         assert escrow.usdc() == usdc.address
         assert escrow.identityRegistry() == identity.address
 
-    def test_reputation_references_identity(self, contracts):
-        """AgentReputation should reference the correct identity registry."""
-        assert contracts["reputation"].identityRegistry() == contracts["identity"].address
-
-    def test_validation_references_identity(self, contracts):
-        """AgentValidation should reference the correct identity registry."""
-        assert contracts["validation"].identityRegistry() == contracts["identity"].address
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -397,7 +396,7 @@ class TestPaymentReputationFlow:
 
         # Register provider as agent
         with boa.env.prank(provider):
-            provider_agent_id = identity.registerAgent("ipfs://QmIntegrationProvider")
+            provider_agent_id = identity.register("ipfs://QmIntegrationProvider")
 
         # Record interaction (server would do this after payment)
         with boa.env.prank(provider):
@@ -433,9 +432,9 @@ class TestPaymentReputationFlow:
 
         # Register both as agents
         with boa.env.prank(worker):
-            worker_agent_id = identity.registerAgent("ipfs://QmLifecycleWorker")
+            worker_agent_id = identity.register("ipfs://QmLifecycleWorker")
         with boa.env.prank(poster):
-            poster_agent_id = identity.registerAgent("ipfs://QmLifecyclePoster")
+            poster_agent_id = identity.register("ipfs://QmLifecyclePoster")
 
         # Fund poster with USDC
         usdc.mint(poster, 100 * 10**6)
@@ -447,17 +446,17 @@ class TestPaymentReputationFlow:
 
         with boa.env.prank(poster):
             usdc.approve(escrow.address, task_amount)
-            task_id = escrow.createTask(poster_agent_id, task_amount, description_hash, deadline)
+            task_id = escrow.create_task(poster_agent_id, task_amount, description_hash, deadline)
 
         assert usdc.balanceOf(escrow.address) == task_amount
 
         # Worker claims and poster approves
         with boa.env.prank(worker):
-            escrow.claimTask(task_id, worker_agent_id)
+            escrow.claim_task(task_id, worker_agent_id)
 
         worker_balance_before = usdc.balanceOf(worker)
         with boa.env.prank(poster):
-            escrow.approveCompletion(task_id)
+            escrow.approve_completion(task_id)
 
         assert usdc.balanceOf(worker) == worker_balance_before + task_amount
 
