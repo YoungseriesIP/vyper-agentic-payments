@@ -47,14 +47,14 @@ interface IIdentityRegistry:
 event TaskCreated:
     taskId: indexed(uint256)
     poster: indexed(address)
-    posterAgentId: uint256
+    poster_agent_id: uint256
     amount: uint256
     deadline: uint256
 
 event TaskClaimed:
     taskId: indexed(uint256)
     worker: indexed(address)
-    workerAgentId: uint256
+    worker_agent_id: uint256
 
 event TaskCompleted:
     taskId: indexed(uint256)
@@ -102,19 +102,19 @@ identityRegistry: public(address)
 admin: public(address)
 
 # Task counter
-nextTaskId: public(uint256)
+next_task_id: public(uint256)
 
 # Task storage
-taskPoster: public(HashMap[uint256, address])
-taskPosterAgentId: public(HashMap[uint256, uint256])
-taskWorker: public(HashMap[uint256, address])
-taskWorkerAgentId: public(HashMap[uint256, uint256])
-taskAmount: public(HashMap[uint256, uint256])
-taskStatus: public(HashMap[uint256, uint8])
-taskDeadline: public(HashMap[uint256, uint256])
-taskCreatedAt: public(HashMap[uint256, uint256])
-taskClaimedAt: public(HashMap[uint256, uint256])
-taskDescriptionHash: public(HashMap[uint256, bytes32])
+task_poster: public(HashMap[uint256, address])
+task_poster_agent_id: public(HashMap[uint256, uint256])
+task_worker: public(HashMap[uint256, address])
+task_worker_agent_id: public(HashMap[uint256, uint256])
+task_amount: public(HashMap[uint256, uint256])
+task_status: public(HashMap[uint256, uint8])
+task_deadline: public(HashMap[uint256, uint256])
+task_created_at: public(HashMap[uint256, uint256])
+task_claimed_at: public(HashMap[uint256, uint256])
+task_description_hash: public(HashMap[uint256, bytes32])
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONSTRUCTOR
@@ -133,7 +133,7 @@ def __init__(usdc_address: address, identity_registry: address):
     self.usdc = usdc_address
     self.identityRegistry = identity_registry
     self.admin = msg.sender
-    self.nextTaskId = 1
+    self.next_task_id = 1
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -141,24 +141,24 @@ def __init__(usdc_address: address, identity_registry: address):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @external
-def createTask(
-    posterAgentId: uint256,
+def create_task(
+    poster_agent_id: uint256,
     amount: uint256,
-    descriptionHash: bytes32,
+    description_hash: bytes32,
     deadline: uint256
 ) -> uint256:
     """
     @notice Create a new task with USDC locked in escrow
-    @param posterAgentId The agent ID of the task poster
+    @param poster_agent_id The agent ID of the task poster
     @param amount USDC amount to lock (6 decimals)
-    @param descriptionHash Hash of task description (IPFS hash)
+    @param description_hash Hash of task description (IPFS hash)
     @param deadline Seconds from now until auto-release (0 for default 7 days)
     @return The new task ID
     @dev Caller must have approved this contract to spend `amount` USDC
     """
     assert amount > 0, "AgentEscrow: zero amount"
-    assert self._agentExists(posterAgentId), "AgentEscrow: agent not found"
-    assert self._isAgentOwner(posterAgentId, msg.sender), "AgentEscrow: not agent owner"
+    assert self._agent_exists(poster_agent_id), "AgentEscrow: agent not found"
+    assert self._is_agent_owner(poster_agent_id, msg.sender), "AgentEscrow: not agent owner"
     
     # Calculate deadline
     actual_deadline: uint256 = deadline
@@ -171,21 +171,21 @@ def createTask(
     assert success, "AgentEscrow: transfer failed"
     
     # Create task
-    taskId: uint256 = self.nextTaskId
-    self.nextTaskId = taskId + 1
+    taskId: uint256 = self.next_task_id
+    self.next_task_id = taskId + 1
     
-    self.taskPoster[taskId] = msg.sender
-    self.taskPosterAgentId[taskId] = posterAgentId
-    self.taskAmount[taskId] = amount
-    self.taskStatus[taskId] = STATUS_OPEN
-    self.taskDeadline[taskId] = block.timestamp + actual_deadline
-    self.taskCreatedAt[taskId] = block.timestamp
-    self.taskDescriptionHash[taskId] = descriptionHash
+    self.task_poster[taskId] = msg.sender
+    self.task_poster_agent_id[taskId] = poster_agent_id
+    self.task_amount[taskId] = amount
+    self.task_status[taskId] = STATUS_OPEN
+    self.task_deadline[taskId] = block.timestamp + actual_deadline
+    self.task_created_at[taskId] = block.timestamp
+    self.task_description_hash[taskId] = description_hash
     
     log TaskCreated(
         taskId=taskId,
         poster=msg.sender,
-        posterAgentId=posterAgentId,
+        poster_agent_id=poster_agent_id,
         amount=amount,
         deadline=block.timestamp + actual_deadline
     )
@@ -198,24 +198,24 @@ def createTask(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @external
-def claimTask(taskId: uint256, workerAgentId: uint256):
+def claim_task(taskId: uint256, worker_agent_id: uint256):
     """
     @notice Claim an open task as a worker
     @param taskId The task to claim
-    @param workerAgentId The agent ID of the worker
+    @param worker_agent_id The agent ID of the worker
     """
-    assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
-    assert self.taskStatus[taskId] == STATUS_OPEN, "AgentEscrow: task not open"
-    assert self._agentExists(workerAgentId), "AgentEscrow: agent not found"
-    assert self._isAgentOwner(workerAgentId, msg.sender), "AgentEscrow: not agent owner"
-    assert workerAgentId != self.taskPosterAgentId[taskId], "AgentEscrow: cannot claim own task"
+    assert taskId > 0 and taskId < self.next_task_id, "AgentEscrow: invalid task"
+    assert self.task_status[taskId] == STATUS_OPEN, "AgentEscrow: task not open"
+    assert self._agent_exists(worker_agent_id), "AgentEscrow: agent not found"
+    assert self._is_agent_owner(worker_agent_id, msg.sender), "AgentEscrow: not agent owner"
+    assert worker_agent_id != self.task_poster_agent_id[taskId], "AgentEscrow: cannot claim own task"
     
-    self.taskWorker[taskId] = msg.sender
-    self.taskWorkerAgentId[taskId] = workerAgentId
-    self.taskStatus[taskId] = STATUS_CLAIMED
-    self.taskClaimedAt[taskId] = block.timestamp
+    self.task_worker[taskId] = msg.sender
+    self.task_worker_agent_id[taskId] = worker_agent_id
+    self.task_status[taskId] = STATUS_CLAIMED
+    self.task_claimed_at[taskId] = block.timestamp
     
-    log TaskClaimed(taskId=taskId, worker=msg.sender, workerAgentId=workerAgentId)
+    log TaskClaimed(taskId=taskId, worker=msg.sender, worker_agent_id=worker_agent_id)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -223,21 +223,21 @@ def claimTask(taskId: uint256, workerAgentId: uint256):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @external
-def approveCompletion(taskId: uint256):
+def approve_completion(taskId: uint256):
     """
     @notice Poster approves task completion, releasing funds to worker
     @param taskId The task to approve
     @dev Only the poster can approve. Releases full amount to worker.
     """
-    assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
-    assert self.taskStatus[taskId] == STATUS_CLAIMED, "AgentEscrow: task not claimed"
-    assert msg.sender == self.taskPoster[taskId], "AgentEscrow: not poster"
+    assert taskId > 0 and taskId < self.next_task_id, "AgentEscrow: invalid task"
+    assert self.task_status[taskId] == STATUS_CLAIMED, "AgentEscrow: task not claimed"
+    assert msg.sender == self.task_poster[taskId], "AgentEscrow: not poster"
     
-    amount: uint256 = self.taskAmount[taskId]
-    worker: address = self.taskWorker[taskId]
+    amount: uint256 = self.task_amount[taskId]
+    worker: address = self.task_worker[taskId]
     
-    self.taskStatus[taskId] = STATUS_COMPLETED
-    self.taskAmount[taskId] = 0
+    self.task_status[taskId] = STATUS_COMPLETED
+    self.task_amount[taskId] = 0
     
     success: bool = extcall IERC20(self.usdc).transfer(worker, amount)
     assert success, "AgentEscrow: transfer failed"
@@ -246,21 +246,21 @@ def approveCompletion(taskId: uint256):
 
 
 @external
-def refundAfterDeadline(taskId: uint256):
+def refund_after_deadline(taskId: uint256):
     """
     @notice Refund poster after deadline if worker has not delivered
     @param taskId The task to refund
     @dev Only the poster can call. Only works if deadline has passed.
     """
-    assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
-    assert self.taskStatus[taskId] == STATUS_CLAIMED, "AgentEscrow: task not claimed"
-    assert msg.sender == self.taskPoster[taskId], "AgentEscrow: not poster"
-    assert block.timestamp >= self.taskDeadline[taskId], "AgentEscrow: deadline not reached"
+    assert taskId > 0 and taskId < self.next_task_id, "AgentEscrow: invalid task"
+    assert self.task_status[taskId] == STATUS_CLAIMED, "AgentEscrow: task not claimed"
+    assert msg.sender == self.task_poster[taskId], "AgentEscrow: not poster"
+    assert block.timestamp >= self.task_deadline[taskId], "AgentEscrow: deadline not reached"
 
-    amount: uint256 = self.taskAmount[taskId]
+    amount: uint256 = self.task_amount[taskId]
 
-    self.taskStatus[taskId] = STATUS_CANCELLED
-    self.taskAmount[taskId] = 0
+    self.task_status[taskId] = STATUS_CANCELLED
+    self.task_amount[taskId] = 0
 
     success: bool = extcall IERC20(self.usdc).transfer(msg.sender, amount)
     assert success, "AgentEscrow: transfer failed"
@@ -273,20 +273,20 @@ def refundAfterDeadline(taskId: uint256):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @external
-def cancelTask(taskId: uint256):
+def cancel_task(taskId: uint256):
     """
     @notice Cancel an open task and return funds to poster
     @param taskId The task to cancel
     @dev Only works for OPEN tasks (not yet claimed)
     """
-    assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
-    assert self.taskStatus[taskId] == STATUS_OPEN, "AgentEscrow: task not open"
-    assert msg.sender == self.taskPoster[taskId], "AgentEscrow: not poster"
+    assert taskId > 0 and taskId < self.next_task_id, "AgentEscrow: invalid task"
+    assert self.task_status[taskId] == STATUS_OPEN, "AgentEscrow: task not open"
+    assert msg.sender == self.task_poster[taskId], "AgentEscrow: not poster"
     
-    amount: uint256 = self.taskAmount[taskId]
+    amount: uint256 = self.task_amount[taskId]
     
-    self.taskStatus[taskId] = STATUS_CANCELLED
-    self.taskAmount[taskId] = 0
+    self.task_status[taskId] = STATUS_CANCELLED
+    self.task_amount[taskId] = 0
     
     success: bool = extcall IERC20(self.usdc).transfer(msg.sender, amount)
     assert success, "AgentEscrow: transfer failed"
@@ -299,46 +299,46 @@ def cancelTask(taskId: uint256):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @external
-def raiseDispute(taskId: uint256):
+def raise_dispute(taskId: uint256):
     """
     @notice Raise a dispute on a claimed task
     @param taskId The task to dispute
     @dev Either poster or worker can raise a dispute
     """
-    assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
-    assert self.taskStatus[taskId] == STATUS_CLAIMED, "AgentEscrow: task not claimed"
-    assert msg.sender == self.taskPoster[taskId] or msg.sender == self.taskWorker[taskId], "AgentEscrow: not party"
+    assert taskId > 0 and taskId < self.next_task_id, "AgentEscrow: invalid task"
+    assert self.task_status[taskId] == STATUS_CLAIMED, "AgentEscrow: task not claimed"
+    assert msg.sender == self.task_poster[taskId] or msg.sender == self.task_worker[taskId], "AgentEscrow: not party"
     
-    self.taskStatus[taskId] = STATUS_DISPUTED
+    self.task_status[taskId] = STATUS_DISPUTED
     
     log TaskDisputed(taskId=taskId, disputer=msg.sender)
 
 
 @external
-def resolveDispute(taskId: uint256, workerWins: bool):
+def resolve_dispute(taskId: uint256, worker_wins: bool):
     """
     @notice Admin resolves a dispute
     @param taskId The disputed task
-    @param workerWins True to release funds to worker, False to refund poster
+    @param worker_wins True to release funds to worker, False to refund poster
     @dev Only admin can resolve disputes.
          Production integration: replace admin-only resolution with
          AgentValidation.isValidationApproved() queries to enable
          decentralized dispute resolution via registered validators.
     """
     assert msg.sender == self.admin, "AgentEscrow: not admin"
-    assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
-    assert self.taskStatus[taskId] == STATUS_DISPUTED, "AgentEscrow: not disputed"
+    assert taskId > 0 and taskId < self.next_task_id, "AgentEscrow: invalid task"
+    assert self.task_status[taskId] == STATUS_DISPUTED, "AgentEscrow: not disputed"
     
-    amount: uint256 = self.taskAmount[taskId]
+    amount: uint256 = self.task_amount[taskId]
     winner: address = empty(address)
     
-    if workerWins:
-        winner = self.taskWorker[taskId]
+    if worker_wins:
+        winner = self.task_worker[taskId]
     else:
-        winner = self.taskPoster[taskId]
+        winner = self.task_poster[taskId]
     
-    self.taskStatus[taskId] = STATUS_COMPLETED
-    self.taskAmount[taskId] = 0
+    self.task_status[taskId] = STATUS_COMPLETED
+    self.task_amount[taskId] = 0
     
     success: bool = extcall IERC20(self.usdc).transfer(winner, amount)
     assert success, "AgentEscrow: transfer failed"
@@ -351,7 +351,7 @@ def resolveDispute(taskId: uint256, workerWins: bool):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @external
-def transferAdmin(new_admin: address):
+def transfer_admin(new_admin: address):
     """
     @notice Transfer admin role
     @param new_admin The new admin address
@@ -367,51 +367,51 @@ def transferAdmin(new_admin: address):
 
 @external
 @view
-def getTaskDetails(taskId: uint256) -> (address, uint256, address, uint256, uint256, uint8, uint256):
+def get_task_details(taskId: uint256) -> (address, uint256, address, uint256, uint256, uint8, uint256):
     """
     @notice Get all task details
     @param taskId The task ID
-    @return Tuple of (poster, posterAgentId, worker, workerAgentId, amount, status, deadline)
+    @return Tuple of (poster, poster_agent_id, worker, worker_agent_id, amount, status, deadline)
     """
-    assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
+    assert taskId > 0 and taskId < self.next_task_id, "AgentEscrow: invalid task"
     
     return (
-        self.taskPoster[taskId],
-        self.taskPosterAgentId[taskId],
-        self.taskWorker[taskId],
-        self.taskWorkerAgentId[taskId],
-        self.taskAmount[taskId],
-        self.taskStatus[taskId],
-        self.taskDeadline[taskId]
+        self.task_poster[taskId],
+        self.task_poster_agent_id[taskId],
+        self.task_worker[taskId],
+        self.task_worker_agent_id[taskId],
+        self.task_amount[taskId],
+        self.task_status[taskId],
+        self.task_deadline[taskId]
     )
 
 
 @external
 @view
-def isTaskOpen(taskId: uint256) -> bool:
+def is_task_open(taskId: uint256) -> bool:
     """
     @notice Check if a task is open for claiming
     @param taskId The task ID
     @return True if open
     """
-    if taskId == 0 or taskId >= self.nextTaskId:
+    if taskId == 0 or taskId >= self.next_task_id:
         return False
-    return self.taskStatus[taskId] == STATUS_OPEN
+    return self.task_status[taskId] == STATUS_OPEN
 
 
 @external
 @view
-def canRefundAfterDeadline(taskId: uint256) -> bool:
+def can_refund_after_deadline(taskId: uint256) -> bool:
     """
     @notice Check if poster can reclaim funds after deadline
     @param taskId The task ID
     @return True if refundable
     """
-    if taskId == 0 or taskId >= self.nextTaskId:
+    if taskId == 0 or taskId >= self.next_task_id:
         return False
-    if self.taskStatus[taskId] != STATUS_CLAIMED:
+    if self.task_status[taskId] != STATUS_CLAIMED:
         return False
-    return block.timestamp >= self.taskDeadline[taskId]
+    return block.timestamp >= self.task_deadline[taskId]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -420,14 +420,14 @@ def canRefundAfterDeadline(taskId: uint256) -> bool:
 
 @internal
 @view
-def _agentExists(agentId: uint256) -> bool:
+def _agent_exists(agentId: uint256) -> bool:
     """Check if an agent exists."""
     return staticcall IIdentityRegistry(self.identityRegistry).ownerOf(agentId) != empty(address)
 
 
 @internal
 @view
-def _isAgentOwner(agentId: uint256, account: address) -> bool:
+def _is_agent_owner(agentId: uint256, account: address) -> bool:
     """Check if account owns the agent."""
     owner: address = staticcall IIdentityRegistry(self.identityRegistry).ownerOf(agentId)
     return owner == account
