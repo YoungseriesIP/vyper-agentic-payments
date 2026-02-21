@@ -102,15 +102,22 @@ def transferFrom(sender: address, recipient: address, amount: uint256) -> bool:
 
 @pytest.fixture
 def identity():
-    """Deploy AgentIdentity contract."""
-    return boa.load("contracts/AgentIdentity.vy")
+    """Deploy lib IdentityRegistry contract (ERC-8004)."""
+    return boa.load(
+        "lib/github/lufa23/erc-8004-vyper/src/identity_registry.vy",
+        "AgentIdentityRegistry",
+        "AGID",
+    )
 
 
 @pytest.fixture
 def reputation(identity, deployer):
-    """Deploy AgentReputation contract linked to identity."""
+    """Deploy lib ReputationRegistry contract (ERC-8004)."""
     with boa.env.prank(deployer):
-        return boa.load("contracts/AgentReputation.vy", identity.address)
+        return boa.load(
+            "lib/github/lufa23/erc-8004-vyper/src/reputation_registry.vy",
+            identity.address,
+        )
 
 
 @pytest.fixture
@@ -125,11 +132,11 @@ def setup_agents(identity, provider, client):
     """Register provider and client as agents, return their agent IDs."""
     # Register provider agent
     with boa.env.prank(provider):
-        provider_agent_id = identity.registerAgent("ipfs://QmProviderAgent...")
+        provider_agent_id = identity.register("ipfs://QmProviderAgent...")
     
     # Register client agent
     with boa.env.prank(client):
-        client_agent_id = identity.registerAgent("ipfs://QmClientAgent...")
+        client_agent_id = identity.register("ipfs://QmClientAgent...")
     
     return provider_agent_id, client_agent_id
 
@@ -179,7 +186,7 @@ def test_full_task_lifecycle(
     # ────────────────────────────────────────────────────────────────────────
     with boa.env.prank(client):
         usdc.approve(escrow.address, task_amount)
-        task_id = escrow.createTask(
+        task_id = escrow.create_task(
             client_agent_id,  # posterAgentId
             task_amount,
             description_hash,
@@ -188,13 +195,13 @@ def test_full_task_lifecycle(
     
     # Verify USDC is locked in escrow
     assert usdc.balanceOf(escrow.address) == task_amount
-    assert escrow.isTaskOpen(task_id) == True
+    assert escrow.is_task_open(task_id) == True
     
     # ────────────────────────────────────────────────────────────────────────
     # Step 2: Provider claims task
     # ────────────────────────────────────────────────────────────────────────
     with boa.env.prank(provider):
-        escrow.claimTask(task_id, provider_agent_id)
+        escrow.claim_task(task_id, provider_agent_id)
     
     # ────────────────────────────────────────────────────────────────────────
     # Step 3: Client approves completion (releases USDC to provider)
@@ -202,7 +209,7 @@ def test_full_task_lifecycle(
     provider_balance_before = usdc.balanceOf(provider)
     
     with boa.env.prank(client):
-        escrow.approveCompletion(task_id)
+        escrow.approve_completion(task_id)
     
     # Verify USDC was transferred to provider
     assert usdc.balanceOf(provider) == provider_balance_before + task_amount
@@ -269,7 +276,7 @@ def test_escrow_dispute_blocks_positive_feedback(
     If escrow is disputed and client wins, they should NOT be able
     to submit positive feedback (interaction was not successfully completed).
     
-    This tests the integrity of the reputation system — you can only
+    This tests the integrity of the reputation system; you can only
     rate agents you've successfully transacted with.
     """
     provider_agent_id, client_agent_id = setup_agents
@@ -280,7 +287,7 @@ def test_escrow_dispute_blocks_positive_feedback(
     # Client creates task
     with boa.env.prank(client):
         usdc.approve(escrow.address, task_amount)
-        task_id = escrow.createTask(
+        task_id = escrow.create_task(
             client_agent_id,
             task_amount,
             description_hash,
@@ -289,16 +296,16 @@ def test_escrow_dispute_blocks_positive_feedback(
     
     # Provider claims task
     with boa.env.prank(provider):
-        escrow.claimTask(task_id, provider_agent_id)
+        escrow.claim_task(task_id, provider_agent_id)
     
     # Provider raises dispute (claiming work is done but client won't approve)
     with boa.env.prank(provider):
-        escrow.raiseDispute(task_id)
+        escrow.raise_dispute(task_id)
     
     # Admin resolves dispute in favor of CLIENT (worker loses)
     # This means the task was NOT successfully completed
     with boa.env.prank(deployer):
-        escrow.resolveDispute(task_id, False)  # workerWins = False
+        escrow.resolve_dispute(task_id, False)  # workerWins = False
     
     # Verify USDC returned to client
     # (In this flow, client gets refund because worker didn't deliver)
@@ -336,7 +343,7 @@ def test_reputation_requires_interaction(
     # Client has NOT interacted with provider's agent
     assert reputation.hasClientInteracted(provider_agent_id, client) == False
     
-    # Client tries to submit feedback — should FAIL
+    # Client tries to submit feedback (should FAIL)
     proof_of_payment = b'\x00' * 32
     with boa.env.prank(client):
         with pytest.raises(boa.BoaError):
@@ -379,7 +386,7 @@ def test_multiple_tasks_multiple_feedbacks(
     client_agent_ids = []
     for i, c in enumerate(clients):
         with boa.env.prank(c):
-            cid = identity.registerAgent(f"ipfs://multi_client_{i}")
+            cid = identity.register(f"ipfs://multi_client_{i}")
             client_agent_ids.append(cid)
     
     for i, score in enumerate(scores):
@@ -391,7 +398,7 @@ def test_multiple_tasks_multiple_feedbacks(
         # Create and complete task
         with boa.env.prank(current_client):
             usdc.approve(escrow.address, task_amount)
-            task_id = escrow.createTask(
+            task_id = escrow.create_task(
                 current_client_agent_id,
                 task_amount,
                 description_hash,
@@ -399,10 +406,10 @@ def test_multiple_tasks_multiple_feedbacks(
             )
         
         with boa.env.prank(provider):
-            escrow.claimTask(task_id, provider_agent_id)
+            escrow.claim_task(task_id, provider_agent_id)
         
         with boa.env.prank(current_client):
-            escrow.approveCompletion(task_id)
+            escrow.approve_completion(task_id)
         
         # Record interaction and submit feedback
         with boa.env.prank(provider):
