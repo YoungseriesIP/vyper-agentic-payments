@@ -84,61 +84,6 @@ def main() -> None:
     for name, info in chain_deployments.items():
         print(f"  {name}: {info['address']}")
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Read from AgentIdentity
-    # ─────────────────────────────────────────────────────────────────────────
-    identity_info = chain_deployments.get("AgentIdentity")
-    if identity_info:
-        print()
-        print("=" * 64)
-        print("  AgentIdentity Contract")
-        print("=" * 64)
-        print()
-
-        identity = load_contract("AgentIdentity", identity_info["address"])
-
-        name = identity.name()
-        symbol = identity.symbol()
-        total_agents = identity.totalAgents()
-
-        print(f"  Name:         {name}")
-        print(f"  Symbol:       {symbol}")
-        print(f"  Total Agents: {total_agents}")
-
-        # Register a new agent
-        print()
-        print("  Registering a new agent...")
-        metadata_uri = f"ipfs://QmExample{__import__('time').time_ns()}"
-
-        try:
-            agent_id = identity.registerAgent(metadata_uri)
-            print(f"  Agent ID: {agent_id}")
-            print(f"  New Total Agents: {identity.totalAgents()}")
-        except Exception as e:
-            print(f"  Registration failed: {e}")
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # Read from AgentReputation
-    # ─────────────────────────────────────────────────────────────────────────
-    reputation_info = chain_deployments.get("AgentReputation")
-    if reputation_info:
-        print()
-        print("=" * 64)
-        print("  AgentReputation Contract")
-        print("=" * 64)
-        print()
-
-        reputation = load_contract("AgentReputation", reputation_info["address"])
-
-        registry_addr = reputation.identityRegistry()
-        print(f"  Identity Registry: {registry_addr}")
-
-        try:
-            avg_score = reputation.getAverageScore(1)
-            print(f"  Agent 1 Average Score: {avg_score / 100}")
-        except Exception:
-            print("  Agent 1 not found or no feedback yet")
-
     print()
     print("=" * 64)
     print("  INTERACTION COMPLETE")
