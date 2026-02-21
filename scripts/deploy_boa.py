@@ -12,7 +12,7 @@ Prerequisites:
 
 Usage:
   python scripts/deploy_boa.py                    # Deploy all contracts
-  python scripts/deploy_boa.py AgentIdentity      # Deploy specific contract
+  python scripts/deploy_boa.py AgentEscrow        # Deploy specific contract
 """
 
 import json
@@ -40,9 +40,6 @@ USDC_ADDRESS = os.getenv("USDC_ADDRESS", "0x360000000000000000000000000000000000
 
 # Contract deployment order (respecting dependencies)
 DEPLOY_ORDER = [
-    "AgentIdentity",
-    "AgentReputation",
-    "AgentValidation",
     "AgentEscrow",
     "SpendingLimiter",
     "PaymentSplitter",
@@ -75,17 +72,10 @@ def get_constructor_args(contract_name: str, deployments: dict, chain_id: str) -
     args = []
 
     if contract_name == "AgentEscrow":
-        # FIXED: usdc_address comes FIRST, then identity_registry
         args.append(USDC_ADDRESS)
-        identity_addr = deployments.get(chain_id, {}).get("AgentIdentity", {}).get("address")
+        identity_addr = os.getenv("IDENTITY_REGISTRY_ADDRESS")
         if not identity_addr:
-            raise ValueError("AgentEscrow requires AgentIdentity to be deployed first")
-        args.append(identity_addr)
-
-    elif contract_name in ("AgentReputation", "AgentValidation"):
-        identity_addr = deployments.get(chain_id, {}).get("AgentIdentity", {}).get("address")
-        if not identity_addr:
-            raise ValueError(f"{contract_name} requires AgentIdentity to be deployed first")
+            raise ValueError("AgentEscrow requires IDENTITY_REGISTRY_ADDRESS env var (lib IdentityRegistry address)")
         args.append(identity_addr)
 
     elif contract_name in ("SpendingLimiter", "PaymentSplitter", "SubscriptionManager"):
