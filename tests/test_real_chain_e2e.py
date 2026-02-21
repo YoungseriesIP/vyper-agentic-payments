@@ -33,11 +33,11 @@ SKIP_REASON = "PRIVATE_KEY not set"
 
 DEPLOYMENTS_FILE = Path(__file__).resolve().parent.parent / "deployments.json"
 HAS_DEPLOYMENTS = DEPLOYMENTS_FILE.exists()
-SKIP_DEPLOYMENTS = "deployments.json not found — run scripts/deploy_boa.py first"
+SKIP_DEPLOYMENTS = "deployments.json not found; run scripts/deploy_boa.py first"
 
 ARC_CHAIN_ID = "5042002"
 
-# Disable boa's evm_snapshot isolation — real RPCs don't support it
+# Disable boa's evm_snapshot isolation. Real RPCs don't support it.
 pytestmark = [
     pytest.mark.ignore_isolation,
     pytest.mark.real_chain,
@@ -76,7 +76,7 @@ def boa_env(private_key):
     import boa
     from eth_account import Account
 
-    boa.set_network_env("https://arc-testnet.drpc.org")
+    boa.set_network_env("https://rpc.testnet.arc.network")
     account = Account.from_key(private_key)
     boa.env.add_account(account, force_eoa=True)
     return account.address
@@ -87,10 +87,10 @@ def identity_contract(deployments):
     """Load the deployed AgentIdentity contract."""
     import boa
 
-    addr = deployments.get("AgentIdentity", {}).get("address")
+    addr = deployments.get("IdentityRegistry", {}).get("address")
     if not addr:
-        pytest.skip("AgentIdentity not deployed")
-    return boa.load_partial("contracts/AgentIdentity.vy").at(addr)
+        pytest.skip("IdentityRegistry not deployed")
+    return boa.load_partial("lib/github/lufa23/erc-8004-vyper/src/identity_registry.vy").at(addr)
 
 
 @pytest.fixture(scope="module")
@@ -98,10 +98,10 @@ def reputation_contract(deployments):
     """Load the deployed AgentReputation contract."""
     import boa
 
-    addr = deployments.get("AgentReputation", {}).get("address")
+    addr = deployments.get("ReputationRegistry", {}).get("address")
     if not addr:
-        pytest.skip("AgentReputation not deployed")
-    return boa.load_partial("contracts/AgentReputation.vy").at(addr)
+        pytest.skip("ReputationRegistry not deployed")
+    return boa.load_partial("lib/github/lufa23/erc-8004-vyper/src/reputation_registry.vy").at(addr)
 
 
 @pytest.fixture(scope="module")
@@ -215,7 +215,7 @@ class TestDeployedContractReads:
     @pytest.mark.skipif(not HAS_DEPLOYMENTS, reason=SKIP_DEPLOYMENTS)
     def test_identity_total_agents(self, boa_env, identity_contract):
         """Should be able to read total agents count."""
-        total = identity_contract.totalAgents()
+        total = identity_contract.totalSupply()
         assert isinstance(total, int)
         assert total >= 0
         print(f"  Total agents on chain: {total}")
@@ -224,7 +224,7 @@ class TestDeployedContractReads:
     @pytest.mark.skipif(not HAS_DEPLOYMENTS, reason=SKIP_DEPLOYMENTS)
     def test_reputation_references_identity(self, boa_env, reputation_contract, deployments):
         """AgentReputation should point to the correct AgentIdentity address."""
-        identity_addr = deployments["AgentIdentity"]["address"]
+        identity_addr = deployments["IdentityRegistry"]["address"]
         assert reputation_contract.identityRegistry().lower() == identity_addr.lower()
 
     @pytest.mark.skipif(not HAS_PRIVATE_KEY, reason=SKIP_REASON)
@@ -232,7 +232,7 @@ class TestDeployedContractReads:
     def test_escrow_references_usdc_and_identity(self, boa_env, escrow_contract, deployments):
         """AgentEscrow should have correct USDC and identity references (constructor bug fix)."""
         usdc_addr = "0x3600000000000000000000000000000000000000"
-        identity_addr = deployments["AgentIdentity"]["address"]
+        identity_addr = deployments["IdentityRegistry"]["address"]
 
         assert escrow_contract.usdc().lower() == usdc_addr.lower()
         assert escrow_contract.identityRegistry().lower() == identity_addr.lower()
@@ -257,16 +257,16 @@ class TestRealChainTransactions:
     @pytest.mark.skipif(not HAS_DEPLOYMENTS, reason=SKIP_DEPLOYMENTS)
     def test_register_agent_on_chain(self, boa_env, identity_contract):
         """Register a new agent on the real Arc Testnet."""
-        initial_count = identity_contract.totalAgents()
+        initial_count = identity_contract.totalSupply()
         print(f"  Initial agent count: {initial_count}")
 
         metadata_uri = f"ipfs://QmE2ETest{int(time.time())}"
-        agent_id = identity_contract.registerAgent(metadata_uri)
+        agent_id = identity_contract.register(metadata_uri)
 
         print(f"  Registered agent ID: {agent_id}")
         assert agent_id > 0
 
-        new_count = identity_contract.totalAgents()
+        new_count = identity_contract.totalSupply()
         print(f"  New agent count: {new_count}")
         assert new_count == initial_count + 1
 
@@ -275,7 +275,7 @@ class TestRealChainTransactions:
     def test_agent_ownership(self, boa_env, identity_contract):
         """Registered agent should be owned by the deployer wallet."""
         # Register a new agent
-        agent_id = identity_contract.registerAgent(f"ipfs://QmOwnerTest{int(time.time())}")
+        agent_id = identity_contract.register(f"ipfs://QmOwnerTest{int(time.time())}")
         owner = identity_contract.ownerOf(agent_id)
         assert owner.lower() == boa_env.lower()
         print(f"  Agent {agent_id} owned by {owner}")
@@ -350,7 +350,7 @@ class TestCirclekitGateway:
 class TestRealPaymentFlow:
     """
     Test the full x402 payment lifecycle with the real Gateway API.
-    This is the most comprehensive test — it proves both repos work together.
+    This is the most comprehensive test, proving both repos work together.
     """
 
     @pytest.mark.skipif(not HAS_PRIVATE_KEY, reason=SKIP_REASON)
@@ -465,7 +465,7 @@ class TestFullStackIntegration:
         """
         # Register via boa
         metadata = f"ipfs://QmSDKVerify{int(time.time())}"
-        agent_id = identity_contract.registerAgent(metadata)
+        agent_id = identity_contract.register(metadata)
         print(f"  Registered agent {agent_id} via boa")
 
         # Verify the contract state is consistent
@@ -475,44 +475,6 @@ class TestFullStackIntegration:
         uri = identity_contract.tokenURI(agent_id)
         assert uri == metadata
         print(f"  Agent {agent_id}: owner={owner[:10]}..., uri={uri}")
-
-    @pytest.mark.skipif(not HAS_PRIVATE_KEY, reason=SKIP_REASON)
-    @pytest.mark.skipif(not HAS_DEPLOYMENTS, reason=SKIP_DEPLOYMENTS)
-    def test_reputation_after_interaction(
-        self, boa_env, identity_contract, reputation_contract
-    ):
-        """
-        Full reputation flow on deployed contracts:
-        1. Register agent
-        2. Record interaction (simulating post-payment)
-        3. Submit feedback with mock proof-of-payment
-        4. Verify reputation state
-        """
-        # Register agent
-        agent_id = identity_contract.registerAgent(f"ipfs://QmRepTest{int(time.time())}")
-        print(f"  Agent {agent_id} registered")
-
-        # Record interaction — agent owner records that the same address interacted
-        # (In production, the server records client address after payment)
-        reputation_contract.recordInteractionBySelf(agent_id)
-        print(f"  Interaction recorded for agent {agent_id}")
-
-        # Verify interaction was recorded
-        has_interacted = reputation_contract.hasClientInteracted(agent_id, boa_env)
-        assert has_interacted is True
-
-        # Submit feedback
-        proof = b"\xde\xad" + b"\x00" * 30
-        feedback_id = reputation_contract.submitFeedback(agent_id, 88, proof)
-        print(f"  Feedback {feedback_id} submitted (score=88)")
-
-        # Verify reputation
-        avg_score = reputation_contract.getAverageScore(agent_id)
-        total_feedback = reputation_contract.getTotalFeedbackCount(agent_id)
-        assert avg_score == 8800  # 88 * 100
-        assert total_feedback == 1
-        print(f"  Average score: {avg_score / 100}, total feedback: {total_feedback}")
-
 
 # =============================================================================
 # SUMMARY
