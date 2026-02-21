@@ -14,7 +14,7 @@ In agent-to-agent commerce:
 2. Agent B (worker) claims and completes the task
 3. Resolution paths:
    - Agent A approves → funds release to Agent B
-   - Timeout expires → funds auto-release to Agent B
+   - Timeout expires → funds refund to Agent A (poster)
    - Dispute → requires validation from AgentValidation.vy
 
 ## Task Lifecycle

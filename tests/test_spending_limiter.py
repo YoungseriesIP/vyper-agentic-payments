@@ -121,9 +121,9 @@ class TestAgentAuthorization:
         """Owner should be able to update limits."""
         with boa.env.prank(alice):
             spending_limiter.authorizeAgent(agent, 10**6, 10**6, 10**6)
-            spending_limiter.updateLimits(agent, 20**6, 200**6, 2000**6)
-        
-        assert spending_limiter.perTxLimit(alice, agent) == 20**6
+            spending_limiter.updateLimits(agent, 20 * 10**6, 200 * 10**6, 2000 * 10**6)
+
+        assert spending_limiter.perTxLimit(alice, agent) == 20 * 10**6
 
 
 class TestSpending:

@@ -1,0 +1,4 @@
+[project]
+src = "contracts"
+lib = "lib"
+dependencies = ["lufa23/erc-8004-vyper@0.1.0"]

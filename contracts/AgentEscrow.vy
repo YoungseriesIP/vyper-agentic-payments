@@ -14,7 +14,7 @@ AGENTIC PATTERN:
     2. Agent B (worker) claims the task and does the work
     3. Three resolution paths:
        a) Agent A approves → funds release to Agent B
-       b) Timeout expires → funds auto-release to Agent B
+       b) Timeout expires → funds refund to Agent A (poster)
        c) Dispute → requires validation from AgentValidation.vy
     
 INTEGRATION WITH OTHER CONTRACTS:
@@ -247,26 +247,26 @@ def approveCompletion(taskId: uint256):
 
 
 @external
-def claimAfterDeadline(taskId: uint256):
+def refundAfterDeadline(taskId: uint256):
     """
-    @notice Worker claims funds after deadline (auto-release)
-    @param taskId The task to claim
-    @dev Only the worker can call. Only works if deadline has passed.
+    @notice Refund poster after deadline if worker has not delivered
+    @param taskId The task to refund
+    @dev Only the poster can call. Only works if deadline has passed.
     """
     assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
     assert self.taskStatus[taskId] == STATUS_CLAIMED, "AgentEscrow: task not claimed"
-    assert msg.sender == self.taskWorker[taskId], "AgentEscrow: not worker"
+    assert msg.sender == self.taskPoster[taskId], "AgentEscrow: not poster"
     assert block.timestamp >= self.taskDeadline[taskId], "AgentEscrow: deadline not reached"
-    
+
     amount: uint256 = self.taskAmount[taskId]
-    
-    self.taskStatus[taskId] = STATUS_COMPLETED
+
+    self.taskStatus[taskId] = STATUS_CANCELLED
     self.taskAmount[taskId] = 0
-    
+
     success: bool = extcall IERC20(self.usdc).transfer(msg.sender, amount)
     assert success, "AgentEscrow: transfer failed"
-    
-    log TaskCompleted(taskId=taskId, worker=msg.sender, amount=amount)
+
+    log TaskCancelled(taskId=taskId, poster=msg.sender, amount=amount)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -321,7 +321,10 @@ def resolveDispute(taskId: uint256, workerWins: bool):
     @notice Admin resolves a dispute
     @param taskId The disputed task
     @param workerWins True to release funds to worker, False to refund poster
-    @dev Only admin can resolve disputes. In production, integrate with AgentValidation.vy
+    @dev Only admin can resolve disputes.
+         Production integration: replace admin-only resolution with
+         AgentValidation.isValidationApproved() queries to enable
+         decentralized dispute resolution via registered validators.
     """
     assert msg.sender == self.admin, "AgentEscrow: not admin"
     assert taskId > 0 and taskId < self.nextTaskId, "AgentEscrow: invalid task"
@@ -399,11 +402,11 @@ def isTaskOpen(taskId: uint256) -> bool:
 
 @external
 @view
-def canClaimAfterDeadline(taskId: uint256) -> bool:
+def canRefundAfterDeadline(taskId: uint256) -> bool:
     """
-    @notice Check if worker can claim funds after deadline
+    @notice Check if poster can reclaim funds after deadline
     @param taskId The task ID
-    @return True if claimable
+    @return True if refundable
     """
     if taskId == 0 or taskId >= self.nextTaskId:
         return False

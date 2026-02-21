@@ -2,7 +2,7 @@
 deploy_boa.py
 
 Deploy Vyper contracts to Arc Testnet using titanoboa.
-No compilation step needed — boa.load() compiles and deploys in one call.
+No compilation step needed. boa.load() compiles and deploys in one call.
 
 Note: AgentEscrow expects (usdc_address, identity_registry), NOT the reverse.
 
@@ -34,7 +34,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONTRACTS_DIR = PROJECT_ROOT / "contracts"
 DEPLOYMENTS_FILE = PROJECT_ROOT / "deployments.json"
 
-ARC_TESTNET_RPC = os.getenv("ARC_TESTNET_RPC", "https://arc-testnet.drpc.org")
+ARC_TESTNET_RPC = os.getenv("ARC_TESTNET_RPC", "https://rpc.testnet.arc.network")
 ARC_TESTNET_CHAIN_ID = int(os.getenv("ARC_TESTNET_CHAIN_ID", "5042002"))
 USDC_ADDRESS = os.getenv("USDC_ADDRESS", "0x3600000000000000000000000000000000000000")
 
@@ -144,14 +144,14 @@ def main() -> None:
 
             args = get_constructor_args(contract_name, deployments, chain_id)
 
-            # boa.load() compiles + deploys in one step — no artifacts needed
+            # boa.load() compiles + deploys in one step (no artifacts needed)
             contract = boa.load(str(contract_path), *args)
 
             print(f"    Deployed at: {contract.address}")
 
             deployments[chain_id][contract_name] = {
                 "address": contract.address,
-                "deployedAt": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+                "deployedAt": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
             }
             save_deployments(deployments)
 

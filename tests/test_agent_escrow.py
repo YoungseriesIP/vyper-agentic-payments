@@ -242,48 +242,48 @@ class TestCancellation:
                 agent_escrow.cancelTask(task_id)
 
 
-class TestDeadlineRelease:
-    """Tests for deadline-based auto-release."""
+class TestDeadlineRefund:
+    """Tests for deadline-based poster refund."""
 
-    def test_claim_after_deadline(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
-        """Worker can claim after deadline."""
+    def test_refund_after_deadline(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
+        """Poster gets refunded after deadline."""
         amount = 50 * 10**6
-        
+
         with boa.env.prank(alice):
             alice_agent = agent_identity.registerAgent("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, amount)
             # Use minimum deadline (1 day)
             task_id = agent_escrow.createTask(alice_agent, amount, b'\x00' * 32, 86400)
-        
+
         with boa.env.prank(bob):
             bob_agent = agent_identity.registerAgent("ipfs://bob")
             agent_escrow.claimTask(task_id, bob_agent)
-        
+
         # Fast forward past deadline
         boa.env.time_travel(seconds=86401)
-        
-        bob_balance_before = funded_usdc.balanceOf(bob)
-        
-        with boa.env.prank(bob):
-            agent_escrow.claimAfterDeadline(task_id)
-        
-        assert agent_escrow.taskStatus(task_id) == 2  # COMPLETED
-        assert funded_usdc.balanceOf(bob) == bob_balance_before + amount
 
-    def test_claim_before_deadline_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
-        """Cannot claim before deadline."""
+        alice_balance_before = funded_usdc.balanceOf(alice)
+
+        with boa.env.prank(alice):
+            agent_escrow.refundAfterDeadline(task_id)
+
+        assert agent_escrow.taskStatus(task_id) == 4  # CANCELLED
+        assert funded_usdc.balanceOf(alice) == alice_balance_before + amount
+
+    def test_refund_before_deadline_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
+        """Cannot refund before deadline."""
         with boa.env.prank(alice):
             alice_agent = agent_identity.registerAgent("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
             task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 86400)
-        
+
         with boa.env.prank(bob):
             bob_agent = agent_identity.registerAgent("ipfs://bob")
             agent_escrow.claimTask(task_id, bob_agent)
-        
-        with boa.env.prank(bob):
+
+        with boa.env.prank(alice):
             with pytest.raises(boa.BoaError, match="deadline not reached"):
-                agent_escrow.claimAfterDeadline(task_id)
+                agent_escrow.refundAfterDeadline(task_id)
 
 
 class TestDisputeResolution:
@@ -409,19 +409,19 @@ class TestViewFunctions:
         
         assert agent_escrow.isTaskOpen(task_id) is False
 
-    def test_can_claim_after_deadline(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
-        """Should correctly report if deadline claim is possible."""
+    def test_can_refund_after_deadline(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
+        """Should correctly report if deadline refund is possible."""
         with boa.env.prank(alice):
             alice_agent = agent_identity.registerAgent("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
             task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 86400)
-        
+
         with boa.env.prank(bob):
             bob_agent = agent_identity.registerAgent("ipfs://bob")
             agent_escrow.claimTask(task_id, bob_agent)
-        
-        assert agent_escrow.canClaimAfterDeadline(task_id) is False
-        
+
+        assert agent_escrow.canRefundAfterDeadline(task_id) is False
+
         boa.env.time_travel(seconds=86401)
-        
-        assert agent_escrow.canClaimAfterDeadline(task_id) is True
+
+        assert agent_escrow.canRefundAfterDeadline(task_id) is True
