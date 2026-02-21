@@ -194,15 +194,22 @@ def bad_receiver():
 
 @pytest.fixture
 def agent_identity():
-    """Deploy the AgentIdentity contract."""
-    return boa.load("contracts/AgentIdentity.vy")
+    """Deploy the lib IdentityRegistry contract (ERC-8004)."""
+    return boa.load(
+        "lib/github/lufa23/erc-8004-vyper/src/identity_registry.vy",
+        "AgentIdentityRegistry",
+        "AGID",
+    )
 
 
 @pytest.fixture
 def agent_reputation(agent_identity, deployer):
-    """Deploy the AgentReputation contract with AgentIdentity reference."""
+    """Deploy the lib ReputationRegistry contract (ERC-8004)."""
     with boa.env.prank(deployer):
-        return boa.load("contracts/AgentReputation.vy", agent_identity.address)
+        return boa.load(
+            "lib/github/lufa23/erc-8004-vyper/src/reputation_registry.vy",
+            agent_identity.address,
+        )
 
 
 @pytest.fixture
