@@ -15,12 +15,12 @@ AGENTIC PATTERN:
     3. Three resolution paths:
        a) Agent A approves → funds release to Agent B
        b) Timeout expires → funds refund to Agent A (poster)
-       c) Dispute → requires validation from AgentValidation.vy
-    
+       c) Dispute → requires validation from lib IdentityRegistry
+
 INTEGRATION WITH OTHER CONTRACTS:
-    - AgentIdentity.vy: Verifies agent IDs are valid
-    - AgentReputation.vy: Can trigger reputation feedback on completion
-    - AgentValidation.vy: Provides dispute resolution via validators
+    - IdentityRegistry (lib): Verifies agent IDs are valid
+    - ReputationRegistry (lib): Can trigger reputation feedback on completion
+    - ValidationRegistry (lib): Provides dispute resolution via validators
 
 TASK LIFECYCLE:
     OPEN (0) → CLAIMED (1) → COMPLETED (2) or DISPUTED (3) or CANCELLED (4)
@@ -37,8 +37,7 @@ interface IERC20:
     def transferFrom(sender: address, recipient: address, amount: uint256) -> bool: nonpayable
     def balanceOf(account: address) -> uint256: view
 
-interface IAgentIdentity:
-    def agentExists(tokenId: uint256) -> bool: view
+interface IIdentityRegistry:
     def ownerOf(tokenId: uint256) -> address: view
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -423,12 +422,12 @@ def canRefundAfterDeadline(taskId: uint256) -> bool:
 @view
 def _agentExists(agentId: uint256) -> bool:
     """Check if an agent exists."""
-    return staticcall IAgentIdentity(self.identityRegistry).agentExists(agentId)
+    return staticcall IIdentityRegistry(self.identityRegistry).ownerOf(agentId) != empty(address)
 
 
 @internal
 @view
 def _isAgentOwner(agentId: uint256, account: address) -> bool:
     """Check if account owns the agent."""
-    owner: address = staticcall IAgentIdentity(self.identityRegistry).ownerOf(agentId)
+    owner: address = staticcall IIdentityRegistry(self.identityRegistry).ownerOf(agentId)
     return owner == account
