@@ -33,7 +33,7 @@ class TestAgentEscrowDeployment:
         assert agent_escrow.usdc() == funded_usdc.address
         assert agent_escrow.identityRegistry() == agent_identity.address
         assert agent_escrow.admin() == deployer
-        assert agent_escrow.nextTaskId() == 1
+        assert agent_escrow.next_task_id() == 1
 
     def test_deploy_with_zero_usdc_fails(self, agent_identity):
         """Should fail with zero USDC address."""
@@ -57,7 +57,7 @@ class TestTaskCreation:
         """Should create a task with USDC locked."""
         # Register agent
         with boa.env.prank(alice):
-            agent_id = agent_identity.registerAgent("ipfs://poster-agent")
+            agent_id = agent_identity..register("ipfs://poster-agent")
         
         amount = 100 * 10**6  # 100 USDC
         task_hash = b'\x12\x34' + b'\x00' * 30
@@ -65,13 +65,13 @@ class TestTaskCreation:
         # Approve and create task
         with boa.env.prank(alice):
             funded_usdc.approve(agent_escrow.address, amount)
-            task_id = agent_escrow.createTask(agent_id, amount, task_hash, 0)
+            task_id = agent_escrow.create_task(agent_id, amount, task_hash, 0)
         
         assert task_id == 1
-        assert agent_escrow.taskPoster(task_id) == alice
-        assert agent_escrow.taskPosterAgentId(task_id) == agent_id
-        assert agent_escrow.taskAmount(task_id) == amount
-        assert agent_escrow.taskStatus(task_id) == 0  # OPEN
+        assert agent_escrow.task_poster(task_id) == alice
+        assert agent_escrow.task_poster_agent_id(task_id) == agent_id
+        assert agent_escrow.task_amount(task_id) == amount
+        assert agent_escrow.task_status(task_id) == 0  # OPEN
         
         # USDC should be locked in escrow
         assert funded_usdc.balanceOf(agent_escrow.address) == amount
@@ -79,42 +79,42 @@ class TestTaskCreation:
     def test_create_task_custom_deadline(self, agent_escrow, agent_identity, funded_usdc, alice):
         """Should accept custom deadline."""
         with boa.env.prank(alice):
-            agent_id = agent_identity.registerAgent("ipfs://agent")
+            agent_id = agent_identity..register("ipfs://agent")
             funded_usdc.approve(agent_escrow.address, 10 * 10**6)
-            task_id = agent_escrow.createTask(agent_id, 10 * 10**6, b'\x00' * 32, 172800)  # 2 days
+            task_id = agent_escrow.create_task(agent_id, 10 * 10**6, b'\x00' * 32, 172800)  # 2 days
         
         # Deadline should be ~2 days from now
-        deadline = agent_escrow.taskDeadline(task_id)
-        created_at = agent_escrow.taskCreatedAt(task_id)
+        deadline = agent_escrow.task_deadline(task_id)
+        created_at = agent_escrow.task_created_at(task_id)
         assert deadline - created_at == 172800
 
     def test_create_task_zero_amount_fails(self, agent_escrow, agent_identity, alice):
         """Should fail with zero amount."""
         with boa.env.prank(alice):
-            agent_id = agent_identity.registerAgent("ipfs://agent")
+            agent_id = agent_identity..register("ipfs://agent")
         
         with boa.env.prank(alice):
             with pytest.raises(boa.BoaError, match="zero amount"):
-                agent_escrow.createTask(agent_id, 0, b'\x00' * 32, 0)
+                agent_escrow.create_task(agent_id, 0, b'\x00' * 32, 0)
 
     def test_create_task_not_agent_owner_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
         """Should fail if caller is not agent owner."""
         with boa.env.prank(alice):
-            agent_id = agent_identity.registerAgent("ipfs://alice-agent")
+            agent_id = agent_identity..register("ipfs://alice-agent")
         
         with boa.env.prank(bob):
             funded_usdc.approve(agent_escrow.address, 10 * 10**6)
             with pytest.raises(boa.BoaError, match="not agent owner"):
-                agent_escrow.createTask(agent_id, 10 * 10**6, b'\x00' * 32, 0)
+                agent_escrow.create_task(agent_id, 10 * 10**6, b'\x00' * 32, 0)
 
     def test_create_task_deadline_too_short_fails(self, agent_escrow, agent_identity, funded_usdc, alice):
         """Should fail if deadline is too short."""
         with boa.env.prank(alice):
-            agent_id = agent_identity.registerAgent("ipfs://agent")
+            agent_id = agent_identity..register("ipfs://agent")
             funded_usdc.approve(agent_escrow.address, 10 * 10**6)
             
             with pytest.raises(boa.BoaError, match="deadline too short"):
-                agent_escrow.createTask(agent_id, 10 * 10**6, b'\x00' * 32, 3600)  # 1 hour
+                agent_escrow.create_task(agent_id, 10 * 10**6, b'\x00' * 32, 3600)  # 1 hour
 
 
 class TestTaskClaiming:
@@ -124,45 +124,45 @@ class TestTaskClaiming:
         """Worker should be able to claim an open task."""
         # Alice creates task
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
         
         # Bob claims task
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
-        assert agent_escrow.taskWorker(task_id) == bob
-        assert agent_escrow.taskWorkerAgentId(task_id) == bob_agent
-        assert agent_escrow.taskStatus(task_id) == 1  # CLAIMED
+        assert agent_escrow.task_worker(task_id) == bob
+        assert agent_escrow.task_worker_agent_id(task_id) == bob_agent
+        assert agent_escrow.task_status(task_id) == 1  # CLAIMED
 
     def test_claim_own_task_fails(self, agent_escrow, agent_identity, funded_usdc, alice):
         """Should not be able to claim own task."""
         with boa.env.prank(alice):
-            agent_id = agent_identity.registerAgent("ipfs://alice")
+            agent_id = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(agent_id, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(agent_id, 50 * 10**6, b'\x00' * 32, 0)
         
         with boa.env.prank(alice):
             with pytest.raises(boa.BoaError, match="cannot claim own task"):
-                agent_escrow.claimTask(task_id, agent_id)
+                agent_escrow.claim_task(task_id, agent_id)
 
     def test_claim_already_claimed_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob, charlie):
         """Should not be able to claim already claimed task."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
         with boa.env.prank(charlie):
-            charlie_agent = agent_identity.registerAgent("ipfs://charlie")
+            charlie_agent = agent_identity..register("ipfs://charlie")
             with pytest.raises(boa.BoaError, match="task not open"):
-                agent_escrow.claimTask(task_id, charlie_agent)
+                agent_escrow.claim_task(task_id, charlie_agent)
 
 
 class TestTaskCompletion:
@@ -173,37 +173,37 @@ class TestTaskCompletion:
         amount = 75 * 10**6
         
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, amount)
-            task_id = agent_escrow.createTask(alice_agent, amount, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, amount, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
         bob_balance_before = funded_usdc.balanceOf(bob)
         
         with boa.env.prank(alice):
-            agent_escrow.approveCompletion(task_id)
+            agent_escrow.approve_completion(task_id)
         
-        assert agent_escrow.taskStatus(task_id) == 2  # COMPLETED
-        assert agent_escrow.taskAmount(task_id) == 0
+        assert agent_escrow.task_status(task_id) == 2  # COMPLETED
+        assert agent_escrow.task_amount(task_id) == 0
         assert funded_usdc.balanceOf(bob) == bob_balance_before + amount
 
     def test_approve_not_poster_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob, charlie):
         """Only poster can approve completion."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
         with boa.env.prank(charlie):
             with pytest.raises(boa.BoaError, match="not poster"):
-                agent_escrow.approveCompletion(task_id)
+                agent_escrow.approve_completion(task_id)
 
 
 class TestCancellation:
@@ -214,32 +214,32 @@ class TestCancellation:
         amount = 100 * 10**6
         
         with boa.env.prank(alice):
-            agent_id = agent_identity.registerAgent("ipfs://alice")
+            agent_id = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, amount)
-            task_id = agent_escrow.createTask(agent_id, amount, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(agent_id, amount, b'\x00' * 32, 0)
         
         alice_balance_before = funded_usdc.balanceOf(alice)
         
         with boa.env.prank(alice):
-            agent_escrow.cancelTask(task_id)
+            agent_escrow.cancel_task(task_id)
         
-        assert agent_escrow.taskStatus(task_id) == 4  # CANCELLED
+        assert agent_escrow.task_status(task_id) == 4  # CANCELLED
         assert funded_usdc.balanceOf(alice) == alice_balance_before + amount
 
     def test_cancel_claimed_task_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
         """Cannot cancel already claimed task."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
         with boa.env.prank(alice):
             with pytest.raises(boa.BoaError, match="task not open"):
-                agent_escrow.cancelTask(task_id)
+                agent_escrow.cancel_task(task_id)
 
 
 class TestDeadlineRefund:
@@ -250,14 +250,14 @@ class TestDeadlineRefund:
         amount = 50 * 10**6
 
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, amount)
             # Use minimum deadline (1 day)
-            task_id = agent_escrow.createTask(alice_agent, amount, b'\x00' * 32, 86400)
+            task_id = agent_escrow.create_task(alice_agent, amount, b'\x00' * 32, 86400)
 
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
 
         # Fast forward past deadline
         boa.env.time_travel(seconds=86401)
@@ -265,25 +265,25 @@ class TestDeadlineRefund:
         alice_balance_before = funded_usdc.balanceOf(alice)
 
         with boa.env.prank(alice):
-            agent_escrow.refundAfterDeadline(task_id)
+            agent_escrow.refund_after_deadline(task_id)
 
-        assert agent_escrow.taskStatus(task_id) == 4  # CANCELLED
+        assert agent_escrow.task_status(task_id) == 4  # CANCELLED
         assert funded_usdc.balanceOf(alice) == alice_balance_before + amount
 
     def test_refund_before_deadline_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
         """Cannot refund before deadline."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 86400)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 86400)
 
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
 
         with boa.env.prank(alice):
             with pytest.raises(boa.BoaError, match="deadline not reached"):
-                agent_escrow.refundAfterDeadline(task_id)
+                agent_escrow.refund_after_deadline(task_id)
 
 
 class TestDisputeResolution:
@@ -292,41 +292,41 @@ class TestDisputeResolution:
     def test_raise_dispute(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
         """Either party can raise dispute."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
         with boa.env.prank(alice):
-            agent_escrow.raiseDispute(task_id)
+            agent_escrow.raise_dispute(task_id)
         
-        assert agent_escrow.taskStatus(task_id) == 3  # DISPUTED
+        assert agent_escrow.task_status(task_id) == 3  # DISPUTED
 
     def test_resolve_dispute_worker_wins(self, agent_escrow, agent_identity, funded_usdc, alice, bob, deployer):
         """Admin can resolve dispute in favor of worker."""
         amount = 50 * 10**6
         
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, amount)
-            task_id = agent_escrow.createTask(alice_agent, amount, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, amount, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
         with boa.env.prank(alice):
-            agent_escrow.raiseDispute(task_id)
+            agent_escrow.raise_dispute(task_id)
         
         bob_balance_before = funded_usdc.balanceOf(bob)
         
         with boa.env.prank(deployer):  # Admin
-            agent_escrow.resolveDispute(task_id, True)  # Worker wins
+            agent_escrow.resolve_dispute(task_id, True)  # Worker wins
         
-        assert agent_escrow.taskStatus(task_id) == 2  # COMPLETED
+        assert agent_escrow.task_status(task_id) == 2  # COMPLETED
         assert funded_usdc.balanceOf(bob) == bob_balance_before + amount
 
     def test_resolve_dispute_poster_wins(self, agent_escrow, agent_identity, funded_usdc, alice, bob, deployer):
@@ -334,39 +334,39 @@ class TestDisputeResolution:
         amount = 50 * 10**6
         
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, amount)
-            task_id = agent_escrow.createTask(alice_agent, amount, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, amount, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
         with boa.env.prank(bob):
-            agent_escrow.raiseDispute(task_id)
+            agent_escrow.raise_dispute(task_id)
         
         alice_balance_before = funded_usdc.balanceOf(alice)
         
         with boa.env.prank(deployer):
-            agent_escrow.resolveDispute(task_id, False)  # Poster wins
+            agent_escrow.resolve_dispute(task_id, False)  # Poster wins
         
         assert funded_usdc.balanceOf(alice) == alice_balance_before + amount
 
     def test_resolve_dispute_not_admin_fails(self, agent_escrow, agent_identity, funded_usdc, alice, bob, charlie):
         """Only admin can resolve disputes."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
-            agent_escrow.raiseDispute(task_id)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
+            agent_escrow.raise_dispute(task_id)
         
         with boa.env.prank(charlie):
             with pytest.raises(boa.BoaError, match="not admin"):
-                agent_escrow.resolveDispute(task_id, True)
+                agent_escrow.resolve_dispute(task_id, True)
 
 
 class TestViewFunctions:
@@ -377,15 +377,15 @@ class TestViewFunctions:
         amount = 100 * 10**6
         
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, amount)
-            task_id = agent_escrow.createTask(alice_agent, amount, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, amount, b'\x00' * 32, 0)
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
-        result = agent_escrow.getTaskDetails(task_id)
+        result = agent_escrow.get_task_details(task_id)
         
         assert result[0] == alice        # poster
         assert result[1] == alice_agent  # posterAgentId
@@ -397,31 +397,31 @@ class TestViewFunctions:
     def test_is_task_open(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
         """Should correctly report if task is open."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 0)
         
-        assert agent_escrow.isTaskOpen(task_id) is True
+        assert agent_escrow.is_task_open(task_id) is True
         
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
         
-        assert agent_escrow.isTaskOpen(task_id) is False
+        assert agent_escrow.is_task_open(task_id) is False
 
     def test_can_refund_after_deadline(self, agent_escrow, agent_identity, funded_usdc, alice, bob):
         """Should correctly report if deadline refund is possible."""
         with boa.env.prank(alice):
-            alice_agent = agent_identity.registerAgent("ipfs://alice")
+            alice_agent = agent_identity..register("ipfs://alice")
             funded_usdc.approve(agent_escrow.address, 50 * 10**6)
-            task_id = agent_escrow.createTask(alice_agent, 50 * 10**6, b'\x00' * 32, 86400)
+            task_id = agent_escrow.create_task(alice_agent, 50 * 10**6, b'\x00' * 32, 86400)
 
         with boa.env.prank(bob):
-            bob_agent = agent_identity.registerAgent("ipfs://bob")
-            agent_escrow.claimTask(task_id, bob_agent)
+            bob_agent = agent_identity..register("ipfs://bob")
+            agent_escrow.claim_task(task_id, bob_agent)
 
-        assert agent_escrow.canRefundAfterDeadline(task_id) is False
+        assert agent_escrow.can_refund_after_deadline(task_id) is False
 
         boa.env.time_travel(seconds=86401)
 
-        assert agent_escrow.canRefundAfterDeadline(task_id) is True
+        assert agent_escrow.can_refund_after_deadline(task_id) is True
