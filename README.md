@@ -2,7 +2,7 @@
 
 **Vyper smart contracts for agentic payment workflows on Circle's Arc chain, integrated with [circlekit](https://github.com/lufa23/circle-titanoboa-sdk) (Python x402 Batching SDK).**
 
-[![Tests](https://img.shields.io/badge/tests-202%20passing-success)](./tests)
+[![Tests](https://img.shields.io/badge/tests-141%20passing-success)](./tests)
 [![Vyper](https://img.shields.io/badge/vyper-0.4.x-blue)](https://vyperlang.org)
 [![Arc Testnet](https://img.shields.io/badge/chain-Arc%20Testnet-purple)](https://developers.circle.com/w3s/arc)
 
@@ -12,10 +12,8 @@ This is the **first-ever Vyper implementation of ERC-8004** (Agent Identity, Rep
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Layer 4: Trust (ERC-8004 - Vyper)                          │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐        │
-│  │AgentIdentity │ │AgentReputation│ │AgentValidation│       │
-│  └──────────────┘ └──────────────┘ └──────────────┘        │
+│  Layer 4: Trust (ERC-8004 - external dependency on Arc Testnet)     │
+│  AgentIdentity · AgentReputation · AgentValidation (read-only)      │
 ├─────────────────────────────────────────────────────────────┤
 │  Layer 3: Governance (Vyper)                                │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐        │
@@ -39,17 +37,17 @@ This is the **first-ever Vyper implementation of ERC-8004** (Agent Identity, Rep
 
 ## What's Included
 
-### Smart Contracts (7 total, 202 tests)
+### Smart Contracts (5 total, 141 tests)
 
-| Contract | Purpose | Tests |
-|----------|---------|-------|
-| `AgentIdentity.vy` | ERC-721 NFT registry for agent identities | 39 |
-| `AgentReputation.vy` | On-chain reputation with proof-of-payment | 28 |
-| `AgentValidation.vy` | Validator-based task verification | 20 |
-| `AgentEscrow.vy` | USDC escrow for agent-to-agent tasks | 24 |
-| `SpendingLimiter.vy` | Agent authorization with spending limits | 20 |
-| `PaymentSplitter.vy` | Revenue distribution for multi-agent work | 27 |
-| `SubscriptionManager.vy` | Recurring USDC payments | 27 |
+| Contract | Track | Purpose | Tests |
+|----------|-------|---------|-------|
+| `Vault.vy` | A | USDC vault with agent-controlled withdrawals | 43 |
+| `AgentEscrow.vy` | C | USDC escrow for agent-to-agent tasks | 24 |
+| `SpendingLimiter.vy` | C | Agent authorization with spending limits | 20 |
+| `PaymentSplitter.vy` | C | Revenue distribution for multi-agent work | 27 |
+| `SubscriptionManager.vy` | C | Recurring USDC payments | 27 |
+
+Note: ERC-8004 agent identity/reputation/validation is consumed as a dependency via the deployed registry on Arc Testnet, not re-implemented here.
 
 ### Python SDK Integration
 
