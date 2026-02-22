@@ -85,3 +85,5 @@ package-lock.json
 
 # NPM config (contains private registry URLs)
 .npmrc
+boa
+pytest
