@@ -1,31 +1,101 @@
 # Hackathon Challenges
 
-Build on Circle's Vyper agentic payment contracts using the `circlekit` Python SDK.
+Three tracks for Circle's hackathon on Arc. All contracts deploy to Arc testnet (Chain ID: `5042002`). USDC is the native gas token. The native USDC address is `0x3600000000000000000000000000000000000000`.
 
-## Setup
+> **Decimal note:** Arc's native USDC balance uses 18 decimals. The ERC-20 interface uses 6. Do not mix these.
 
-```bash
-# From the repo root
-pip install -e .
-pip install -e ../circle-titanoboa-sdk
-pip install -e ".[integration]"
+---
+
+## Tracks
+
+### Track A — Vyper on Arc
+
+A step-by-step introduction to writing, deploying, and interacting with Vyper contracts on Arc. No Circle SDK required — just Vyper, Moccasin, and the chain.
+
+| Step | Name | Type |
+|------|------|------|
+| A1 | Environment setup | Instructions only |
+| A2 | Deploy your first Vyper contract | Code challenge |
+| A3 | Write a test suite | Code challenge |
+| A4 | Register your contract as an ERC-8004 agent | Code challenge |
+
+### Track B — Circle Integration
+
+A checklist-style track covering the full Circle product stack on Arc. Each step builds on the previous. Ends with a live x402 payment on-chain using `circlekit`.
+
+| Step | Name | Type |
+|------|------|------|
+| B1 | Get a Circle API key | Instructions only |
+| B2 | Provision a Circle Programmable Wallet | Instructions only |
+| B3 | Deploy a Vyper contract from your Circle Wallet | Code challenge |
+| B4 | Make an x402 payment on-chain | Code challenge |
+
+### Track C — Advanced Challenges
+
+Five contract primitives that extend what vanilla x402 can do. Each is an independent contract — pick one or more, complete in any order.
+
+| Step | Name | Contract |
+|------|------|----------|
+| C1 | SpendingLimiter | `SpendingLimiter.vy` |
+| C2 | AgentEscrow with Hash-Commitment Release | `AgentEscrow.vy` |
+| C3 | SubscriptionManager with On-Chain Cancellation | `SubscriptionManager.vy` |
+| C4 | Atomic PaymentSplitter for Multi-Agent Workflows | `PaymentSplitter.vy` |
+| C5 | Payment Channel with Challenge Period | `PaymentChannel.vy` |
+
+---
+
+## Directory Layout
+
+```
+challenges/
+├── README.md              ← you are here
+├── track_a/
+│   ├── a1_environment_setup/
+│   ├── a2_first_contract/
+│   ├── a3_test_suite/
+│   └── a4_erc8004_agent/
+├── track_b/
+│   ├── b1_api_key/
+│   ├── b2_programmable_wallet/
+│   ├── b3_deploy_from_wallet/
+│   └── b4_x402_payment/
+└── track_c/
+    ├── c1_spending_limiter/
+    ├── c2_agent_escrow/
+    ├── c3_subscription_manager/
+    ├── c4_payment_splitter/
+    └── c5_payment_channel/
 ```
 
-## Challenges
+Each challenge directory contains:
+- **`README.md`** — Instructions, spec, and hints
+- **`challenge.py`** — A template with `TODO` placeholders (code challenges only)
 
-| # | Name | Difficulty | Contract | What You Build |
-|---|------|-----------|----------|----------------|
-| 1 | Agent Identity | Easy | `AgentIdentity.vy` | Register an agent with `registerAgent()` |
-| 2 | Reputation Feedback | Medium | `AgentReputation.vy` | Record interaction + submit feedback with `submitFeedback()` |
-| 3 | Escrow Task | Medium-Hard | `AgentEscrow.vy` | Create a task with `createTask()` + approve with `approveCompletion()` |
-| 4 | Spending Limits | Hard | `SpendingLimiter.vy` | Authorize an agent and call `spend()` with 3-tier limits |
-| 5 | x402 Payment + Reputation | Hard (Capstone) | `circlekit` SDK + `AgentReputation.vy` | Pay via `GatewayClient.pay()` + record on-chain reputation feedback |
+---
 
-## How It Works
+## Prerequisites
 
-Each challenge has:
-- **`challenge.py`** — A template with `TODO` placeholders for you to fill in
-- **`README.md`** — Instructions and hints
+1. **Install Moccasin and Vyper**
+
+   ```bash
+   pip install moccasin
+   ```
+
+2. **Configure dependencies** in `moccasin.toml`:
+
+   ```toml
+   [dependencies]
+   erc-8004-vyper = { git = "https://github.com/lufa23/erc-8004-vyper" }
+   circle-titanoboa-sdk = { git = "https://github.com/lufa23/circle-titanoboa-sdk" }
+   ```
+
+3. **Fund a wallet** from the [Arc testnet faucet](https://faucet.circle.com) (20 USDC per 2 hours per address)
+
+4. **Verify your balance** on the [Arc block explorer](https://explorer.arc.network)
+
+Track B additionally requires a [Circle Developer Console](https://console.circle.com) account (free tier is sufficient).
+
+---
 
 ## Running Tests
 
@@ -33,13 +103,29 @@ Each challenge has:
 # Run all challenge tests (they FAIL until you complete the TODOs)
 pytest tests/test_hackathon_challenges.py -v
 
-# Run a specific challenge
-pytest tests/test_hackathon_challenges.py -v -k "challenge_1"
+# Run a specific track
+pytest tests/test_hackathon_challenges.py -v -k "TrackA"
+pytest tests/test_hackathon_challenges.py -v -k "TrackC"
 ```
 
-## Tips
+---
 
-- Read the contract source in `contracts/` before coding
-- Use `boa.env.prank(address)` to impersonate accounts
-- Check `tests/conftest.py` for fixture patterns
-- The existing test suite (`pytest tests/ -v -m "not integration and not challenge"`) is your reference implementation
+## Style
+
+Vyper convention is `snek_case` for all identifiers. Use it throughout.
+
+---
+
+## Resources
+
+- [Arc documentation](https://docs.arc.network)
+- [Arc testnet faucet](https://faucet.circle.com)
+- [Arc block explorer](https://explorer.arc.network)
+- [Circle developer docs](https://developers.circle.com)
+- [x402 protocol spec](https://x402.org)
+- [Vyper documentation](https://docs.vyperlang.org)
+- [Moccasin](https://cyfrin.github.io/moccasin/) — Vyper project framework
+- [Titanoboa](https://github.com/vyperlang/titanoboa) — Vyper interpreter for local testing
+- [circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk) — Python SDK for x402 with Circle Gateway
+- [erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper) — Vyper reference implementation of ERC-8004
+- [EIP-8004 spec](https://eips.ethereum.org/EIPS/eip-8004)
