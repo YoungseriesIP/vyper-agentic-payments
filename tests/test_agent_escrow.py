@@ -31,7 +31,7 @@ class TestAgentEscrowDeployment:
     def test_initial_state(self, agent_escrow, funded_usdc, agent_identity, deployer):
         """Contract should initialize correctly."""
         assert agent_escrow.usdc() == funded_usdc.address
-        assert agent_escrow.identityRegistry() == agent_identity.address
+        assert agent_escrow.identity_registry() == agent_identity.address
         assert agent_escrow.admin() == deployer
         assert agent_escrow.next_task_id() == 1
 
