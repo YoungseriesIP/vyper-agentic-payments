@@ -22,37 +22,37 @@ from ethereum.ercs import IERC20
 # ============================================================================
 
 event PlanCreated:
-    planId: indexed(uint256)
+    plan_id: indexed(uint256)
     provider: indexed(address)
     price: uint256
     interval: uint256
 
 event PlanUpdated:
-    planId: indexed(uint256)
-    newPrice: uint256
+    plan_id: indexed(uint256)
+    new_price: uint256
 
 event PlanDeactivated:
-    planId: indexed(uint256)
+    plan_id: indexed(uint256)
 
 event Subscribed:
-    subscriptionId: indexed(uint256)
-    planId: indexed(uint256)
+    subscription_id: indexed(uint256)
+    plan_id: indexed(uint256)
     subscriber: indexed(address)
 
 event PaymentCharged:
-    subscriptionId: indexed(uint256)
+    subscription_id: indexed(uint256)
     amount: uint256
-    chargedAt: uint256
+    charged_at: uint256
 
 event SubscriptionCancelled:
-    subscriptionId: indexed(uint256)
-    cancelledBy: indexed(address)
+    subscription_id: indexed(uint256)
+    cancelled_by: indexed(address)
 
 event SubscriptionPaused:
-    subscriptionId: indexed(uint256)
+    subscription_id: indexed(uint256)
 
 event SubscriptionResumed:
-    subscriptionId: indexed(uint256)
+    subscription_id: indexed(uint256)
 
 # ============================================================================
 # ENUMS & STRUCTS
@@ -79,28 +79,28 @@ GRACE_PERIOD: constant(uint256) = 86400 * 7  # 7 days grace period
 usdc: public(immutable(address))
 
 # Plan ID counter
-nextPlanId: public(uint256)
+next_plan_id: public(uint256)
 
 # Subscription ID counter
-nextSubscriptionId: public(uint256)
+next_subscription_id: public(uint256)
 
 # Plan storage
-planProvider: public(HashMap[uint256, address])
-planPrice: public(HashMap[uint256, uint256])
-planInterval: public(HashMap[uint256, uint256])  # seconds between charges
-planActive: public(HashMap[uint256, bool])
-planMetadata: public(HashMap[uint256, String[256]])  # optional metadata URI
+plan_provider: public(HashMap[uint256, address])
+plan_price: public(HashMap[uint256, uint256])
+plan_interval: public(HashMap[uint256, uint256])  # seconds between charges
+plan_active: public(HashMap[uint256, bool])
+plan_metadata: public(HashMap[uint256, String[256]])  # optional metadata URI
 
 # Subscription storage
-subscriptionPlan: public(HashMap[uint256, uint256])  # subscription -> plan
-subscriptionSubscriber: public(HashMap[uint256, address])
-subscriptionStatus: public(HashMap[uint256, uint8])
-subscriptionStartedAt: public(HashMap[uint256, uint256])
-subscriptionLastCharge: public(HashMap[uint256, uint256])
-subscriptionTotalPaid: public(HashMap[uint256, uint256])
+subscription_plan: public(HashMap[uint256, uint256])  # subscription -> plan
+subscription_subscriber: public(HashMap[uint256, address])
+subscription_status: public(HashMap[uint256, uint8])
+subscription_started_at: public(HashMap[uint256, uint256])
+subscription_last_charge: public(HashMap[uint256, uint256])
+subscription_total_paid: public(HashMap[uint256, uint256])
 
 # Subscriber lookup
-subscriberToSubscription: public(HashMap[address, HashMap[uint256, uint256]])  # subscriber -> plan -> subId
+subscriber_to_subscription: public(HashMap[address, HashMap[uint256, uint256]])  # subscriber -> plan -> sub_id
 
 # ============================================================================
 # CONSTRUCTOR
@@ -114,15 +114,15 @@ def __init__(_usdc: address):
     """
     assert _usdc != empty(address), "zero address"
     usdc = _usdc
-    self.nextPlanId = 1
-    self.nextSubscriptionId = 1
+    self.next_plan_id = 1
+    self.next_subscription_id = 1
 
 # ============================================================================
 # PLAN MANAGEMENT
 # ============================================================================
 
 @external
-def createPlan(price: uint256, interval: uint256, metadata: String[256] = "") -> uint256:
+def create_plan(price: uint256, interval: uint256, metadata: String[256] = "") -> uint256:
     """
     @notice Create a new subscription plan
     @param price USDC amount per interval (6 decimals)
@@ -134,157 +134,157 @@ def createPlan(price: uint256, interval: uint256, metadata: String[256] = "") ->
     assert interval >= MIN_INTERVAL, "interval too short"
     assert interval <= MAX_INTERVAL, "interval too long"
     
-    planId: uint256 = self.nextPlanId
-    self.nextPlanId = planId + 1
+    plan_id: uint256 = self.next_plan_id
+    self.next_plan_id = plan_id + 1
     
-    self.planProvider[planId] = msg.sender
-    self.planPrice[planId] = price
-    self.planInterval[planId] = interval
-    self.planActive[planId] = True
-    self.planMetadata[planId] = metadata
+    self.plan_provider[plan_id] = msg.sender
+    self.plan_price[plan_id] = price
+    self.plan_interval[plan_id] = interval
+    self.plan_active[plan_id] = True
+    self.plan_metadata[plan_id] = metadata
     
-    log PlanCreated(planId=planId, provider=msg.sender, price=price, interval=interval)
+    log PlanCreated(plan_id=plan_id, provider=msg.sender, price=price, interval=interval)
     
-    return planId
+    return plan_id
 
 @external
-def updatePlanPrice(planId: uint256, newPrice: uint256):
+def update_plan_price(plan_id: uint256, new_price: uint256):
     """
     @notice Update plan price (provider only)
     @dev Affects future charges, not existing subscriptions until renewal
-    @param planId The plan ID
-    @param newPrice New USDC price
+    @param plan_id The plan ID
+    @param new_price New USDC price
     """
-    assert self.planProvider[planId] == msg.sender, "not provider"
-    assert newPrice > 0, "zero price"
+    assert self.plan_provider[plan_id] == msg.sender, "not provider"
+    assert new_price > 0, "zero price"
     
-    self.planPrice[planId] = newPrice
+    self.plan_price[plan_id] = new_price
     
-    log PlanUpdated(planId=planId, newPrice=newPrice)
+    log PlanUpdated(plan_id=plan_id, new_price=new_price)
 
 @external
-def deactivatePlan(planId: uint256):
+def deactivate_plan(plan_id: uint256):
     """
     @notice Deactivate a plan (no new subscriptions)
-    @param planId The plan ID
+    @param plan_id The plan ID
     """
-    assert self.planProvider[planId] == msg.sender, "not provider"
+    assert self.plan_provider[plan_id] == msg.sender, "not provider"
     
-    self.planActive[planId] = False
+    self.plan_active[plan_id] = False
     
-    log PlanDeactivated(planId=planId)
+    log PlanDeactivated(plan_id=plan_id)
 
 # ============================================================================
 # SUBSCRIPTION MANAGEMENT
 # ============================================================================
 
 @external
-def subscribe(planId: uint256) -> uint256:
+def subscribe(plan_id: uint256) -> uint256:
     """
     @notice Subscribe to a plan and pay first interval
-    @param planId The plan ID to subscribe to
+    @param plan_id The plan ID to subscribe to
     @return Subscription ID
     """
-    assert self.planActive[planId], "plan not active"
-    assert self.planProvider[planId] != empty(address), "plan not found"
-    assert self.subscriberToSubscription[msg.sender][planId] == 0, "already subscribed"
+    assert self.plan_active[plan_id], "plan not active"
+    assert self.plan_provider[plan_id] != empty(address), "plan not found"
+    assert self.subscriber_to_subscription[msg.sender][plan_id] == 0, "already subscribed"
     
-    subscriptionId: uint256 = self.nextSubscriptionId
-    self.nextSubscriptionId = subscriptionId + 1
+    subscription_id: uint256 = self.next_subscription_id
+    self.next_subscription_id = subscription_id + 1
     
-    price: uint256 = self.planPrice[planId]
+    price: uint256 = self.plan_price[plan_id]
     
     # Transfer first payment
-    success: bool = extcall IERC20(usdc).transferFrom(msg.sender, self.planProvider[planId], price)
+    success: bool = extcall IERC20(usdc).transferFrom(msg.sender, self.plan_provider[plan_id], price)
     assert success, "payment failed"
     
     # Create subscription
-    self.subscriptionPlan[subscriptionId] = planId
-    self.subscriptionSubscriber[subscriptionId] = msg.sender
-    self.subscriptionStatus[subscriptionId] = STATUS_ACTIVE
-    self.subscriptionStartedAt[subscriptionId] = block.timestamp
-    self.subscriptionLastCharge[subscriptionId] = block.timestamp
-    self.subscriptionTotalPaid[subscriptionId] = price
+    self.subscription_plan[subscription_id] = plan_id
+    self.subscription_subscriber[subscription_id] = msg.sender
+    self.subscription_status[subscription_id] = STATUS_ACTIVE
+    self.subscription_started_at[subscription_id] = block.timestamp
+    self.subscription_last_charge[subscription_id] = block.timestamp
+    self.subscription_total_paid[subscription_id] = price
     
-    self.subscriberToSubscription[msg.sender][planId] = subscriptionId
+    self.subscriber_to_subscription[msg.sender][plan_id] = subscription_id
     
-    log Subscribed(subscriptionId=subscriptionId, planId=planId, subscriber=msg.sender)
-    log PaymentCharged(subscriptionId=subscriptionId, amount=price, chargedAt=block.timestamp)
+    log Subscribed(subscription_id=subscription_id, plan_id=plan_id, subscriber=msg.sender)
+    log PaymentCharged(subscription_id=subscription_id, amount=price, charged_at=block.timestamp)
     
-    return subscriptionId
+    return subscription_id
 
 @external
-def charge(subscriptionId: uint256):
+def charge(subscription_id: uint256):
     """
     @notice Charge a subscription for the next interval
     @dev Can be called by anyone, but payment goes to plan provider
-    @param subscriptionId The subscription ID
+    @param subscription_id The subscription ID
     """
-    assert self.subscriptionStatus[subscriptionId] == STATUS_ACTIVE, "not active"
+    assert self.subscription_status[subscription_id] == STATUS_ACTIVE, "not active"
     
-    planId: uint256 = self.subscriptionPlan[subscriptionId]
-    interval: uint256 = self.planInterval[planId]
-    lastCharge: uint256 = self.subscriptionLastCharge[subscriptionId]
+    plan_id: uint256 = self.subscription_plan[subscription_id]
+    interval: uint256 = self.plan_interval[plan_id]
+    last_charge: uint256 = self.subscription_last_charge[subscription_id]
     
-    assert block.timestamp >= lastCharge + interval, "not due yet"
+    assert block.timestamp >= last_charge + interval, "not due yet"
     
-    subscriber: address = self.subscriptionSubscriber[subscriptionId]
-    provider: address = self.planProvider[planId]
-    price: uint256 = self.planPrice[planId]
+    subscriber: address = self.subscription_subscriber[subscription_id]
+    provider: address = self.plan_provider[plan_id]
+    price: uint256 = self.plan_price[plan_id]
     
     # Transfer payment
     success: bool = extcall IERC20(usdc).transferFrom(subscriber, provider, price)
     assert success, "payment failed"
     
-    self.subscriptionLastCharge[subscriptionId] = block.timestamp
-    self.subscriptionTotalPaid[subscriptionId] += price
+    self.subscription_last_charge[subscription_id] = block.timestamp
+    self.subscription_total_paid[subscription_id] += price
     
-    log PaymentCharged(subscriptionId=subscriptionId, amount=price, chargedAt=block.timestamp)
+    log PaymentCharged(subscription_id=subscription_id, amount=price, charged_at=block.timestamp)
 
 @external
-def cancel(subscriptionId: uint256):
+def cancel(subscription_id: uint256):
     """
     @notice Cancel a subscription
     @dev Can be cancelled by subscriber or provider
-    @param subscriptionId The subscription ID
+    @param subscription_id The subscription ID
     """
-    subscriber: address = self.subscriptionSubscriber[subscriptionId]
-    planId: uint256 = self.subscriptionPlan[subscriptionId]
-    provider: address = self.planProvider[planId]
+    subscriber: address = self.subscription_subscriber[subscription_id]
+    plan_id: uint256 = self.subscription_plan[subscription_id]
+    provider: address = self.plan_provider[plan_id]
     
     assert msg.sender == subscriber or msg.sender == provider, "not authorized"
-    assert self.subscriptionStatus[subscriptionId] != STATUS_CANCELLED, "already cancelled"
+    assert self.subscription_status[subscription_id] != STATUS_CANCELLED, "already cancelled"
     
-    self.subscriptionStatus[subscriptionId] = STATUS_CANCELLED
-    self.subscriberToSubscription[subscriber][planId] = 0
+    self.subscription_status[subscription_id] = STATUS_CANCELLED
+    self.subscriber_to_subscription[subscriber][plan_id] = 0
     
-    log SubscriptionCancelled(subscriptionId=subscriptionId, cancelledBy=msg.sender)
+    log SubscriptionCancelled(subscription_id=subscription_id, cancelled_by=msg.sender)
 
 @external
-def pause(subscriptionId: uint256):
+def pause(subscription_id: uint256):
     """
     @notice Pause a subscription (subscriber only)
-    @param subscriptionId The subscription ID
+    @param subscription_id The subscription ID
     """
-    assert self.subscriptionSubscriber[subscriptionId] == msg.sender, "not subscriber"
-    assert self.subscriptionStatus[subscriptionId] == STATUS_ACTIVE, "not active"
+    assert self.subscription_subscriber[subscription_id] == msg.sender, "not subscriber"
+    assert self.subscription_status[subscription_id] == STATUS_ACTIVE, "not active"
     
-    self.subscriptionStatus[subscriptionId] = STATUS_PAUSED
+    self.subscription_status[subscription_id] = STATUS_PAUSED
     
-    log SubscriptionPaused(subscriptionId=subscriptionId)
+    log SubscriptionPaused(subscription_id=subscription_id)
 
 @external
-def resume(subscriptionId: uint256):
+def resume(subscription_id: uint256):
     """
     @notice Resume a paused subscription (subscriber only)
-    @param subscriptionId The subscription ID
+    @param subscription_id The subscription ID
     """
-    assert self.subscriptionSubscriber[subscriptionId] == msg.sender, "not subscriber"
-    assert self.subscriptionStatus[subscriptionId] == STATUS_PAUSED, "not paused"
+    assert self.subscription_subscriber[subscription_id] == msg.sender, "not subscriber"
+    assert self.subscription_status[subscription_id] == STATUS_PAUSED, "not paused"
     
-    self.subscriptionStatus[subscriptionId] = STATUS_ACTIVE
+    self.subscription_status[subscription_id] = STATUS_ACTIVE
     
-    log SubscriptionResumed(subscriptionId=subscriptionId)
+    log SubscriptionResumed(subscription_id=subscription_id)
 
 # ============================================================================
 # VIEW FUNCTIONS
@@ -292,92 +292,92 @@ def resume(subscriptionId: uint256):
 
 @view
 @external
-def isDue(subscriptionId: uint256) -> bool:
+def is_due(subscription_id: uint256) -> bool:
     """
     @notice Check if subscription payment is due
-    @param subscriptionId The subscription ID
+    @param subscription_id The subscription ID
     @return True if payment can be charged
     """
-    if self.subscriptionStatus[subscriptionId] != STATUS_ACTIVE:
+    if self.subscription_status[subscription_id] != STATUS_ACTIVE:
         return False
     
-    planId: uint256 = self.subscriptionPlan[subscriptionId]
-    interval: uint256 = self.planInterval[planId]
-    lastCharge: uint256 = self.subscriptionLastCharge[subscriptionId]
+    plan_id: uint256 = self.subscription_plan[subscription_id]
+    interval: uint256 = self.plan_interval[plan_id]
+    last_charge: uint256 = self.subscription_last_charge[subscription_id]
     
-    return block.timestamp >= lastCharge + interval
+    return block.timestamp >= last_charge + interval
 
 @view
 @external
-def isOverdue(subscriptionId: uint256) -> bool:
+def is_overdue(subscription_id: uint256) -> bool:
     """
     @notice Check if subscription is overdue (past grace period)
-    @param subscriptionId The subscription ID
+    @param subscription_id The subscription ID
     @return True if subscription is overdue
     """
-    if self.subscriptionStatus[subscriptionId] != STATUS_ACTIVE:
+    if self.subscription_status[subscription_id] != STATUS_ACTIVE:
         return False
     
-    planId: uint256 = self.subscriptionPlan[subscriptionId]
-    interval: uint256 = self.planInterval[planId]
-    lastCharge: uint256 = self.subscriptionLastCharge[subscriptionId]
+    plan_id: uint256 = self.subscription_plan[subscription_id]
+    interval: uint256 = self.plan_interval[plan_id]
+    last_charge: uint256 = self.subscription_last_charge[subscription_id]
     
-    return block.timestamp > lastCharge + interval + GRACE_PERIOD
+    return block.timestamp > last_charge + interval + GRACE_PERIOD
 
 @view
 @external
-def nextChargeTime(subscriptionId: uint256) -> uint256:
+def next_charge_time(subscription_id: uint256) -> uint256:
     """
     @notice Get next charge timestamp
-    @param subscriptionId The subscription ID
+    @param subscription_id The subscription ID
     @return Timestamp when next charge is due
     """
-    planId: uint256 = self.subscriptionPlan[subscriptionId]
-    interval: uint256 = self.planInterval[planId]
-    lastCharge: uint256 = self.subscriptionLastCharge[subscriptionId]
+    plan_id: uint256 = self.subscription_plan[subscription_id]
+    interval: uint256 = self.plan_interval[plan_id]
+    last_charge: uint256 = self.subscription_last_charge[subscription_id]
     
-    return lastCharge + interval
+    return last_charge + interval
 
 @view
 @external
-def getPlanInfo(planId: uint256) -> (address, uint256, uint256, bool, String[256]):
+def get_plan_info(plan_id: uint256) -> (address, uint256, uint256, bool, String[256]):
     """
     @notice Get plan information
-    @param planId The plan ID
-    @return (provider, price, interval, isActive, metadata)
+    @param plan_id The plan ID
+    @return (provider, price, interval, is_active, metadata)
     """
     return (
-        self.planProvider[planId],
-        self.planPrice[planId],
-        self.planInterval[planId],
-        self.planActive[planId],
-        self.planMetadata[planId]
+        self.plan_provider[plan_id],
+        self.plan_price[plan_id],
+        self.plan_interval[plan_id],
+        self.plan_active[plan_id],
+        self.plan_metadata[plan_id]
     )
 
 @view
 @external
-def getSubscriptionInfo(subscriptionId: uint256) -> (uint256, address, uint8, uint256, uint256, uint256):
+def get_subscription_info(subscription_id: uint256) -> (uint256, address, uint8, uint256, uint256, uint256):
     """
     @notice Get subscription information
-    @param subscriptionId The subscription ID
-    @return (planId, subscriber, status, startedAt, lastCharge, totalPaid)
+    @param subscription_id The subscription ID
+    @return (plan_id, subscriber, status, started_at, last_charge, total_paid)
     """
     return (
-        self.subscriptionPlan[subscriptionId],
-        self.subscriptionSubscriber[subscriptionId],
-        self.subscriptionStatus[subscriptionId],
-        self.subscriptionStartedAt[subscriptionId],
-        self.subscriptionLastCharge[subscriptionId],
-        self.subscriptionTotalPaid[subscriptionId]
+        self.subscription_plan[subscription_id],
+        self.subscription_subscriber[subscription_id],
+        self.subscription_status[subscription_id],
+        self.subscription_started_at[subscription_id],
+        self.subscription_last_charge[subscription_id],
+        self.subscription_total_paid[subscription_id]
     )
 
 @view
 @external
-def getSubscriptionId(subscriber: address, planId: uint256) -> uint256:
+def get_subscription_id(subscriber: address, plan_id: uint256) -> uint256:
     """
     @notice Get subscription ID for a subscriber and plan
     @param subscriber The subscriber address
-    @param planId The plan ID
+    @param plan_id The plan ID
     @return Subscription ID (0 if not subscribed)
     """
-    return self.subscriberToSubscription[subscriber][planId]
+    return self.subscriber_to_subscription[subscriber][plan_id]
