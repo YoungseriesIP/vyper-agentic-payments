@@ -22,32 +22,32 @@ from ethereum.ercs import IERC20
 # ============================================================================
 
 event PoolCreated:
-    poolId: indexed(uint256)
+    pool_id: indexed(uint256)
     owner: indexed(address)
-    recipientCount: uint256
+    recipient_count: uint256
 
 event SharesUpdated:
-    poolId: indexed(uint256)
+    pool_id: indexed(uint256)
     recipient: indexed(address)
-    newShares: uint256
+    new_shares: uint256
 
 event PaymentReceived:
-    poolId: indexed(uint256)
+    pool_id: indexed(uint256)
     amount: uint256
     sender: indexed(address)
 
 event PaymentClaimed:
-    poolId: indexed(uint256)
+    pool_id: indexed(uint256)
     recipient: indexed(address)
     amount: uint256
 
 event RecipientAdded:
-    poolId: indexed(uint256)
+    pool_id: indexed(uint256)
     recipient: indexed(address)
     shares: uint256
 
 event RecipientRemoved:
-    poolId: indexed(uint256)
+    pool_id: indexed(uint256)
     recipient: indexed(address)
 
 # ============================================================================
@@ -64,25 +64,25 @@ MAX_SHARES: constant(uint256) = 10000  # 100.00% in basis points
 usdc: public(immutable(address))
 
 # Pool ID counter
-nextPoolId: public(uint256)
+next_pool_id: public(uint256)
 
 # Pool owner (can update shares)
-poolOwner: public(HashMap[uint256, address])
+pool_owner: public(HashMap[uint256, address])
 
 # Total shares in a pool (should equal MAX_SHARES for proper distribution)
-totalShares: public(HashMap[uint256, uint256])
+total_shares: public(HashMap[uint256, uint256])
 
 # Shares per recipient in a pool
 shares: public(HashMap[uint256, HashMap[address, uint256]])
 
 # Total USDC deposited to a pool (cumulative)
-totalReceived: public(HashMap[uint256, uint256])
+total_received: public(HashMap[uint256, uint256])
 
 # USDC already claimed by recipient from a pool
 claimed: public(HashMap[uint256, HashMap[address, uint256]])
 
 # Track if recipient is part of pool (for iteration tracking)
-isRecipient: public(HashMap[uint256, HashMap[address, bool]])
+is_recipient: public(HashMap[uint256, HashMap[address, bool]])
 
 # ============================================================================
 # CONSTRUCTOR
@@ -96,169 +96,169 @@ def __init__(_usdc: address):
     """
     assert _usdc != empty(address), "zero address"
     usdc = _usdc
-    self.nextPoolId = 1
+    self.next_pool_id = 1
 
 # ============================================================================
 # POOL MANAGEMENT
 # ============================================================================
 
 @external
-def createPool(
+def create_pool(
     recipients: DynArray[address, 100],
-    shareAmounts: DynArray[uint256, 100]
+    share_amounts: DynArray[uint256, 100]
 ) -> uint256:
     """
     @notice Create a new payment pool with share allocations
     @param recipients List of recipient addresses
-    @param shareAmounts List of share amounts (in basis points)
+    @param share_amounts List of share amounts (in basis points)
     @return Pool ID
     """
     assert len(recipients) > 0, "no recipients"
-    assert len(recipients) == len(shareAmounts), "length mismatch"
+    assert len(recipients) == len(share_amounts), "length mismatch"
     assert len(recipients) <= MAX_RECIPIENTS, "too many recipients"
     
-    poolId: uint256 = self.nextPoolId
-    self.nextPoolId = poolId + 1
+    pool_id: uint256 = self.next_pool_id
+    self.next_pool_id = pool_id + 1
     
-    self.poolOwner[poolId] = msg.sender
+    self.pool_owner[pool_id] = msg.sender
     
-    totalSharesSum: uint256 = 0
+    total_shares_sum: uint256 = 0
     
     for i: uint256 in range(100):
         if i >= len(recipients):
             break
         
         recipient: address = recipients[i]
-        shareAmount: uint256 = shareAmounts[i]
+        share_amount: uint256 = share_amounts[i]
         
         assert recipient != empty(address), "zero recipient"
-        assert shareAmount > 0, "zero shares"
-        assert not self.isRecipient[poolId][recipient], "duplicate recipient"
+        assert share_amount > 0, "zero shares"
+        assert not self.is_recipient[pool_id][recipient], "duplicate recipient"
         
-        self.shares[poolId][recipient] = shareAmount
-        self.isRecipient[poolId][recipient] = True
-        totalSharesSum += shareAmount
+        self.shares[pool_id][recipient] = share_amount
+        self.is_recipient[pool_id][recipient] = True
+        total_shares_sum += share_amount
     
-    assert totalSharesSum == MAX_SHARES, "shares must equal 10000"
-    self.totalShares[poolId] = totalSharesSum
+    assert total_shares_sum == MAX_SHARES, "shares must equal 10000"
+    self.total_shares[pool_id] = total_shares_sum
     
-    log PoolCreated(poolId=poolId, owner=msg.sender, recipientCount=len(recipients))
+    log PoolCreated(pool_id=pool_id, owner=msg.sender, recipient_count=len(recipients))
     
-    return poolId
+    return pool_id
 
 @external
-def updateShares(poolId: uint256, recipient: address, newShares: uint256):
+def update_shares(pool_id: uint256, recipient: address, new_shares: uint256):
     """
     @notice Update shares for a recipient (pool owner only)
     @dev This can break the MAX_SHARES invariant - use carefully
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param recipient The recipient to update
-    @param newShares New share amount
+    @param new_shares New share amount
     """
-    assert self.poolOwner[poolId] == msg.sender, "not pool owner"
-    assert self.isRecipient[poolId][recipient], "not a recipient"
+    assert self.pool_owner[pool_id] == msg.sender, "not pool owner"
+    assert self.is_recipient[pool_id][recipient], "not a recipient"
     
-    oldShares: uint256 = self.shares[poolId][recipient]
-    self.shares[poolId][recipient] = newShares
-    self.totalShares[poolId] = self.totalShares[poolId] - oldShares + newShares
+    old_shares: uint256 = self.shares[pool_id][recipient]
+    self.shares[pool_id][recipient] = new_shares
+    self.total_shares[pool_id] = self.total_shares[pool_id] - old_shares + new_shares
     
-    log SharesUpdated(poolId=poolId, recipient=recipient, newShares=newShares)
+    log SharesUpdated(pool_id=pool_id, recipient=recipient, new_shares=new_shares)
 
 @external
-def addRecipient(poolId: uint256, recipient: address, shareAmount: uint256):
+def add_recipient(pool_id: uint256, recipient: address, share_amount: uint256):
     """
     @notice Add a new recipient to the pool (pool owner only)
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param recipient New recipient address
-    @param shareAmount Share amount for new recipient
+    @param share_amount Share amount for new recipient
     """
-    assert self.poolOwner[poolId] == msg.sender, "not pool owner"
+    assert self.pool_owner[pool_id] == msg.sender, "not pool owner"
     assert recipient != empty(address), "zero recipient"
-    assert not self.isRecipient[poolId][recipient], "already recipient"
-    assert shareAmount > 0, "zero shares"
+    assert not self.is_recipient[pool_id][recipient], "already recipient"
+    assert share_amount > 0, "zero shares"
     
-    self.shares[poolId][recipient] = shareAmount
-    self.isRecipient[poolId][recipient] = True
-    self.totalShares[poolId] += shareAmount
+    self.shares[pool_id][recipient] = share_amount
+    self.is_recipient[pool_id][recipient] = True
+    self.total_shares[pool_id] += share_amount
     
-    log RecipientAdded(poolId=poolId, recipient=recipient, shares=shareAmount)
+    log RecipientAdded(pool_id=pool_id, recipient=recipient, shares=share_amount)
 
 @external
-def removeRecipient(poolId: uint256, recipient: address):
+def remove_recipient(pool_id: uint256, recipient: address):
     """
     @notice Remove a recipient from the pool (pool owner only)
     @dev Recipient should claim before removal
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param recipient Recipient to remove
     """
-    assert self.poolOwner[poolId] == msg.sender, "not pool owner"
-    assert self.isRecipient[poolId][recipient], "not a recipient"
+    assert self.pool_owner[pool_id] == msg.sender, "not pool owner"
+    assert self.is_recipient[pool_id][recipient], "not a recipient"
     
-    shareAmount: uint256 = self.shares[poolId][recipient]
-    self.totalShares[poolId] -= shareAmount
-    self.shares[poolId][recipient] = 0
-    self.isRecipient[poolId][recipient] = False
+    share_amount: uint256 = self.shares[pool_id][recipient]
+    self.total_shares[pool_id] -= share_amount
+    self.shares[pool_id][recipient] = 0
+    self.is_recipient[pool_id][recipient] = False
     
-    log RecipientRemoved(poolId=poolId, recipient=recipient)
+    log RecipientRemoved(pool_id=pool_id, recipient=recipient)
 
 # ============================================================================
 # PAYMENTS
 # ============================================================================
 
 @external
-def deposit(poolId: uint256, amount: uint256):
+def deposit(pool_id: uint256, amount: uint256):
     """
     @notice Deposit USDC to a payment pool
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param amount Amount of USDC to deposit
     """
     assert amount > 0, "zero amount"
-    assert self.poolOwner[poolId] != empty(address), "pool not found"
+    assert self.pool_owner[pool_id] != empty(address), "pool not found"
     
     # Transfer USDC from sender to this contract
     success: bool = extcall IERC20(usdc).transferFrom(msg.sender, self, amount)
     assert success, "transfer failed"
     
-    self.totalReceived[poolId] += amount
+    self.total_received[pool_id] += amount
     
-    log PaymentReceived(poolId=poolId, amount=amount, sender=msg.sender)
+    log PaymentReceived(pool_id=pool_id, amount=amount, sender=msg.sender)
 
 @external
-def claim(poolId: uint256):
+def claim(pool_id: uint256):
     """
     @notice Claim your share of accumulated payments
-    @param poolId The pool ID
+    @param pool_id The pool ID
     """
-    assert self.isRecipient[poolId][msg.sender], "not a recipient"
+    assert self.is_recipient[pool_id][msg.sender], "not a recipient"
     
-    claimable: uint256 = self._pendingPayment(poolId, msg.sender)
+    claimable: uint256 = self._pending_payment(pool_id, msg.sender)
     assert claimable > 0, "nothing to claim"
     
-    self.claimed[poolId][msg.sender] += claimable
+    self.claimed[pool_id][msg.sender] += claimable
     
     success: bool = extcall IERC20(usdc).transfer(msg.sender, claimable)
     assert success, "transfer failed"
     
-    log PaymentClaimed(poolId=poolId, recipient=msg.sender, amount=claimable)
+    log PaymentClaimed(pool_id=pool_id, recipient=msg.sender, amount=claimable)
 
 @external
-def claimFor(poolId: uint256, recipient: address):
+def claim_for(pool_id: uint256, recipient: address):
     """
     @notice Claim on behalf of a recipient (anyone can trigger)
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param recipient The recipient to claim for
     """
-    assert self.isRecipient[poolId][recipient], "not a recipient"
+    assert self.is_recipient[pool_id][recipient], "not a recipient"
     
-    claimable: uint256 = self._pendingPayment(poolId, recipient)
+    claimable: uint256 = self._pending_payment(pool_id, recipient)
     assert claimable > 0, "nothing to claim"
     
-    self.claimed[poolId][recipient] += claimable
+    self.claimed[pool_id][recipient] += claimable
     
     success: bool = extcall IERC20(usdc).transfer(recipient, claimable)
     assert success, "transfer failed"
     
-    log PaymentClaimed(poolId=poolId, recipient=recipient, amount=claimable)
+    log PaymentClaimed(pool_id=pool_id, recipient=recipient, amount=claimable)
 
 # ============================================================================
 # VIEW FUNCTIONS
@@ -266,77 +266,77 @@ def claimFor(poolId: uint256, recipient: address):
 
 @view
 @external
-def pendingPayment(poolId: uint256, recipient: address) -> uint256:
+def pending_payment(pool_id: uint256, recipient: address) -> uint256:
     """
     @notice Get pending payment for a recipient
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param recipient The recipient address
     @return Amount of USDC claimable
     """
-    return self._pendingPayment(poolId, recipient)
+    return self._pending_payment(pool_id, recipient)
 
 @view
 @internal
-def _pendingPayment(poolId: uint256, recipient: address) -> uint256:
+def _pending_payment(pool_id: uint256, recipient: address) -> uint256:
     """
     @notice Internal: Calculate pending payment
     """
-    if not self.isRecipient[poolId][recipient]:
+    if not self.is_recipient[pool_id][recipient]:
         return 0
     
-    if self.totalShares[poolId] == 0:
+    if self.total_shares[pool_id] == 0:
         return 0
     
     # Calculate total owed based on shares
-    totalOwed: uint256 = (self.totalReceived[poolId] * self.shares[poolId][recipient]) // self.totalShares[poolId]
+    total_owed: uint256 = (self.total_received[pool_id] * self.shares[pool_id][recipient]) // self.total_shares[pool_id]
     
     # Subtract already claimed
-    alreadyClaimed: uint256 = self.claimed[poolId][recipient]
+    already_claimed: uint256 = self.claimed[pool_id][recipient]
     
-    if totalOwed <= alreadyClaimed:
+    if total_owed <= already_claimed:
         return 0
     
-    return totalOwed - alreadyClaimed
+    return total_owed - already_claimed
 
 @view
 @external
-def getPoolInfo(poolId: uint256) -> (address, uint256, uint256):
+def get_pool_info(pool_id: uint256) -> (address, uint256, uint256):
     """
     @notice Get pool information
-    @param poolId The pool ID
-    @return (owner, totalShares, totalReceived)
+    @param pool_id The pool ID
+    @return (owner, total_shares, total_received)
     """
     return (
-        self.poolOwner[poolId],
-        self.totalShares[poolId],
-        self.totalReceived[poolId]
+        self.pool_owner[pool_id],
+        self.total_shares[pool_id],
+        self.total_received[pool_id]
     )
 
 @view
 @external
-def getRecipientInfo(poolId: uint256, recipient: address) -> (uint256, uint256, uint256, bool):
+def get_recipient_info(pool_id: uint256, recipient: address) -> (uint256, uint256, uint256, bool):
     """
     @notice Get recipient information in a pool
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param recipient The recipient address
-    @return (shares, claimed, pending, isRecipient)
+    @return (shares, claimed, pending, is_recipient)
     """
     return (
-        self.shares[poolId][recipient],
-        self.claimed[poolId][recipient],
-        self._pendingPayment(poolId, recipient),
-        self.isRecipient[poolId][recipient]
+        self.shares[pool_id][recipient],
+        self.claimed[pool_id][recipient],
+        self._pending_payment(pool_id, recipient),
+        self.is_recipient[pool_id][recipient]
     )
 
 @view
 @external
-def getSharePercentage(poolId: uint256, recipient: address) -> uint256:
+def get_share_percentage(pool_id: uint256, recipient: address) -> uint256:
     """
     @notice Get recipient's share as percentage (basis points)
-    @param poolId The pool ID
+    @param pool_id The pool ID
     @param recipient The recipient address
     @return Share percentage in basis points (e.g., 5000 = 50%)
     """
-    if self.totalShares[poolId] == 0:
+    if self.total_shares[pool_id] == 0:
         return 0
-    return (self.shares[poolId][recipient] * MAX_SHARES) // self.totalShares[poolId]
+    return (self.shares[pool_id][recipient] * MAX_SHARES) // self.total_shares[pool_id]
