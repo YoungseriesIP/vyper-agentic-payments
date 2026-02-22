@@ -69,20 +69,20 @@ def __init__():
 def mint(to: address, amount: uint256):
     self.balanceOf[to] += amount
     self.totalSupply += amount
-    log Transfer(empty(address), to, amount)
+    log Transfer(sender=empty(address), receiver=to, amount=amount)
 
 @external
 def transfer(to: address, amount: uint256) -> bool:
     assert self.balanceOf[msg.sender] >= amount, "Insufficient balance"
     self.balanceOf[msg.sender] -= amount
     self.balanceOf[to] += amount
-    log Transfer(msg.sender, to, amount)
+    log Transfer(sender=msg.sender, receiver=to, amount=amount)
     return True
 
 @external
 def approve(spender: address, amount: uint256) -> bool:
     self.allowance[msg.sender][spender] = amount
-    log Approval(msg.sender, spender, amount)
+    log Approval(owner=msg.sender, spender=spender, amount=amount)
     return True
 
 @external
@@ -92,7 +92,7 @@ def transferFrom(sender: address, recipient: address, amount: uint256) -> bool:
     self.allowance[sender][msg.sender] -= amount
     self.balanceOf[sender] -= amount
     self.balanceOf[recipient] += amount
-    log Transfer(sender, recipient, amount)
+    log Transfer(sender=sender, receiver=recipient, amount=amount)
     return True
 """
 
