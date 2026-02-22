@@ -1,6 +1,7 @@
 # test_smoke.py
 import boa
 
+
 def test_vyper_works():
     code = """
 # @version ^0.4.0

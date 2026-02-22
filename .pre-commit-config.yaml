@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.2
+    hooks:
+      - id: ruff
+        args: [--fix]
+        types_or: [python]
+        exclude: ^lib/
+      - id: ruff-format
+        types_or: [python]
+        exclude: ^(lib/|challenges/|tests/)
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        types: [python]
+        args: [--config-file, pyproject.toml]
+        exclude: ^lib/

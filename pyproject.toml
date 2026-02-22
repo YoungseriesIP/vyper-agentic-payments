@@ -32,8 +32,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black>=24.0.0",
-    "isort>=5.13.0",
+    "ruff>=0.15.0",
+    "mypy>=1.19.0",
+    "pre-commit>=4.5.0",
 ]
 integration = [
     "flask>=3.0.0",
@@ -58,10 +59,20 @@ markers = [
     "real_chain: end-to-end tests requiring a live Arc Testnet RPC connection",
 ]
 
-[tool.black]
+[tool.ruff]
+target-version = "py310"
 line-length = 100
-target-version = ["py310", "py311", "py312"]
+exclude = ["lib/"]
 
-[tool.isort]
-profile = "black"
-line_length = 100
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"challenges/**" = ["F401", "F841", "I001", "E501"]
+"tests/**" = ["F401", "F821", "I001", "W291", "W293", "E501"]
+"examples/agent-marketplace/server.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+exclude = ["lib/", "contracts/"]

@@ -70,10 +70,9 @@ AGENT_METADATA = {
 # FLASK SETUP + x402 ADAPTER
 # ============================================================================
 
-from flask import Flask, Response, jsonify, request
-
 from circlekit import create_gateway_middleware
 from circlekit.x402 import PaymentInfo
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -84,10 +83,14 @@ gateway = create_gateway_middleware(
 
 # Background event loop for async process_request() calls
 _loop = asyncio.new_event_loop()
-_loop_thread = threading.Thread(
-    target=lambda: (asyncio.set_event_loop(_loop), _loop.run_forever()),
-    daemon=True,
-)
+
+
+def _run_event_loop() -> None:
+    asyncio.set_event_loop(_loop)
+    _loop.run_forever()
+
+
+_loop_thread = threading.Thread(target=_run_event_loop, daemon=True)
 _loop_thread.start()
 
 
@@ -128,21 +131,25 @@ def require_payment(price: str):
 @app.route("/")
 def index():
     """Agent Discovery (free) — ERC-8004 style metadata."""
-    return jsonify({
-        "success": True,
-        "agent": AGENT_METADATA,
-        "message": "Use x402 payments to access /api/analyze and /api/generate",
-    })
+    return jsonify(
+        {
+            "success": True,
+            "agent": AGENT_METADATA,
+            "message": "Use x402 payments to access /api/analyze and /api/generate",
+        }
+    )
 
 
 @app.route("/health")
 def health():
     """Health check (free)."""
-    return jsonify({
-        "status": "ok",
-        "agent": AGENT_METADATA["name"],
-        "seller": SELLER_ADDRESS,
-    })
+    return jsonify(
+        {
+            "status": "ok",
+            "agent": AGENT_METADATA["name"],
+            "seller": SELLER_ADDRESS,
+        }
+    )
 
 
 # ============================================================================
@@ -161,29 +168,31 @@ def analyze():
     print(f"          Amount: {result.amount}")
     print(f"          Tx: {result.transaction}")
 
-    resp = jsonify({
-        "success": True,
-        "service": "analyze",
-        "result": {
-            "summary": "Analysis complete. Key findings indicate positive trends.",
-            "confidence": 0.87,
-            "dataPoints": 42,
-            "insights": [
-                "Trend A shows 15% growth",
-                "Pattern B correlates with external factor C",
-                "Anomaly detected in sector D",
-            ],
-        },
-        "payment": {
-            "amount": result.amount,
-            "payer": result.payer,
-            "transaction": result.transaction,
-        },
-        "reputationHint": {
-            "message": "Submit feedback with this transaction hash as proofOfPayment",
-            "proofOfPayment": result.transaction,
-        },
-    })
+    resp = jsonify(
+        {
+            "success": True,
+            "service": "analyze",
+            "result": {
+                "summary": "Analysis complete. Key findings indicate positive trends.",
+                "confidence": 0.87,
+                "dataPoints": 42,
+                "insights": [
+                    "Trend A shows 15% growth",
+                    "Pattern B correlates with external factor C",
+                    "Anomaly detected in sector D",
+                ],
+            },
+            "payment": {
+                "amount": result.amount,
+                "payer": result.payer,
+                "transaction": result.transaction,
+            },
+            "reputationHint": {
+                "message": "Submit feedback with this transaction hash as proofOfPayment",
+                "proofOfPayment": result.transaction,
+            },
+        }
+    )
     for k, v in result.response_headers.items():
         resp.headers[k] = v
     return resp
@@ -204,25 +213,27 @@ def generate():
     print(f'          Prompt: "{prompt[:50]}..."')
     print(f"          Tx: {result.transaction}")
 
-    resp = jsonify({
-        "success": True,
-        "service": "generate",
-        "input": {"prompt": prompt, "style": style},
-        "result": {
-            "content": f'Generated {style} content based on: "{prompt}"',
-            "wordCount": 150,
-            "generatedAt": datetime.now(timezone.utc).isoformat(),
-        },
-        "payment": {
-            "amount": result.amount,
-            "payer": result.payer,
-            "transaction": result.transaction,
-        },
-        "reputationHint": {
-            "message": "Submit feedback with this transaction hash as proofOfPayment",
-            "proofOfPayment": result.transaction,
-        },
-    })
+    resp = jsonify(
+        {
+            "success": True,
+            "service": "generate",
+            "input": {"prompt": prompt, "style": style},
+            "result": {
+                "content": f'Generated {style} content based on: "{prompt}"',
+                "wordCount": 150,
+                "generatedAt": datetime.now(timezone.utc).isoformat(),
+            },
+            "payment": {
+                "amount": result.amount,
+                "payer": result.payer,
+                "transaction": result.transaction,
+            },
+            "reputationHint": {
+                "message": "Submit feedback with this transaction hash as proofOfPayment",
+                "proofOfPayment": result.transaction,
+            },
+        }
+    )
     for k, v in result.response_headers.items():
         resp.headers[k] = v
     return resp
@@ -242,15 +253,17 @@ def feedback():
     print(f"           Comment: {body.get('comment')}")
     print(f"           Proof: {body.get('proofOfPayment')}")
 
-    return jsonify({
-        "success": True,
-        "message": "Feedback recorded (simulated - would write to AgentReputation.vy)",
-        "feedback": {
-            "score": body.get("score"),
-            "comment": body.get("comment"),
-            "proofOfPayment": body.get("proofOfPayment"),
-        },
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": "Feedback recorded (simulated - would write to AgentReputation.vy)",
+            "feedback": {
+                "score": body.get("score"),
+                "comment": body.get("comment"),
+                "proofOfPayment": body.get("proofOfPayment"),
+            },
+        }
+    )
 
 
 # ============================================================================
@@ -259,12 +272,12 @@ def feedback():
 
 if __name__ == "__main__":
     print(f"""
-{'=' * 64}
+{"=" * 64}
   Agent Marketplace - x402 Seller (circlekit)
-{'=' * 64}
+{"=" * 64}
 
 Server:    http://localhost:{PORT}
-Agent:     {AGENT_METADATA['name']}
+Agent:     {AGENT_METADATA["name"]}
 Seller:    {SELLER_ADDRESS}
 Networks:  All Gateway-supported chains
 

@@ -29,7 +29,8 @@ load_dotenv()
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Deposit USDC into Gateway Wallet")
     parser.add_argument(
-        "--amount", "-a",
+        "--amount",
+        "-a",
         default=os.getenv("DEPOSIT_AMOUNT", "0.5"),
         help="Amount of USDC to deposit (default: 0.5)",
     )

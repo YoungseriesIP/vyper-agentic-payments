@@ -101,8 +101,10 @@ async def main() -> None:
         print(f"   Agent:        {agent['name']}")
         print(f"   Description:  {agent['description']}")
         print(f"   Capabilities: {', '.join(agent['capabilities'])}")
-        print(f"   Pricing:      analyze={agent['pricing']['analyze']}, "
-              f"generate={agent['pricing']['generate']}")
+        print(
+            f"   Pricing:      analyze={agent['pricing']['analyze']}, "
+            f"generate={agent['pricing']['generate']}"
+        )
         print(f"   x402 Support: {'Yes' if agent['x402Support'] else 'No'}")
 
         # ──────────────────────────────────────────────────────────────────

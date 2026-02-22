@@ -75,7 +75,10 @@ def get_constructor_args(contract_name: str, deployments: dict, chain_id: str) -
         args.append(USDC_ADDRESS)
         identity_addr = os.getenv("IDENTITY_REGISTRY_ADDRESS")
         if not identity_addr:
-            raise ValueError("AgentEscrow requires IDENTITY_REGISTRY_ADDRESS env var (lib IdentityRegistry address)")
+            raise ValueError(
+                "AgentEscrow requires IDENTITY_REGISTRY_ADDRESS env var"
+                " (lib IdentityRegistry address)"
+            )
         args.append(identity_addr)
 
     elif contract_name in ("SpendingLimiter", "PaymentSplitter", "SubscriptionManager"):
@@ -141,7 +144,11 @@ def main() -> None:
 
             deployments[chain_id][contract_name] = {
                 "address": contract.address,
-                "deployedAt": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+                "deployedAt": (
+                    __import__("datetime")
+                    .datetime.now(__import__("datetime").timezone.utc)
+                    .isoformat()
+                ),
             }
             save_deployments(deployments)
 
