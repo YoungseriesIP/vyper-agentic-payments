@@ -9,6 +9,7 @@ This module provides:
 
 import pytest
 import boa
+boa.interpret.set_search_path(["lib/pypi"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
