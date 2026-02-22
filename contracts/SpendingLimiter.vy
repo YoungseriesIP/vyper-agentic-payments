@@ -48,9 +48,9 @@ interface IERC20:
 event AgentAuthorized:
     owner: indexed(address)
     agent: indexed(address)
-    perTxLimit: uint256
-    dailyLimit: uint256
-    totalLimit: uint256
+    per_tx_limit: uint256
+    daily_limit: uint256
+    total_limit: uint256
 
 event AgentRevoked:
     owner: indexed(address)
@@ -59,9 +59,9 @@ event AgentRevoked:
 event LimitsUpdated:
     owner: indexed(address)
     agent: indexed(address)
-    perTxLimit: uint256
-    dailyLimit: uint256
-    totalLimit: uint256
+    per_tx_limit: uint256
+    daily_limit: uint256
+    total_limit: uint256
 
 event SpendingRecorded:
     owner: indexed(address)
@@ -85,20 +85,20 @@ event FundsWithdrawn:
 usdc: public(address)
 
 # Owner balances (funds deposited for agents to spend)
-ownerBalance: public(HashMap[address, uint256])
+owner_balance: public(HashMap[address, uint256])
 
 # Agent authorization: owner -> agent -> is authorized
-isAuthorized: public(HashMap[address, HashMap[address, bool]])
+is_authorized: public(HashMap[address, HashMap[address, bool]])
 
 # Spending limits: owner -> agent -> limit values
-perTxLimit: public(HashMap[address, HashMap[address, uint256]])
-dailyLimit: public(HashMap[address, HashMap[address, uint256]])
-totalLimit: public(HashMap[address, HashMap[address, uint256]])
+per_tx_limit: public(HashMap[address, HashMap[address, uint256]])
+daily_limit: public(HashMap[address, HashMap[address, uint256]])
+total_limit: public(HashMap[address, HashMap[address, uint256]])
 
 # Spending tracking
-totalSpent: public(HashMap[address, HashMap[address, uint256]])
-dailySpent: public(HashMap[address, HashMap[address, uint256]])
-lastSpendingDay: public(HashMap[address, HashMap[address, uint256]])
+total_spent: public(HashMap[address, HashMap[address, uint256]])
+daily_spent: public(HashMap[address, HashMap[address, uint256]])
+last_spending_day: public(HashMap[address, HashMap[address, uint256]])
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONSTRUCTOR
@@ -130,7 +130,7 @@ def deposit(amount: uint256):
     success: bool = extcall IERC20(self.usdc).transferFrom(msg.sender, self, amount)
     assert success, "SpendingLimiter: transfer failed"
     
-    self.ownerBalance[msg.sender] += amount
+    self.owner_balance[msg.sender] += amount
     
     log FundsDeposited(owner=msg.sender, amount=amount)
 
@@ -142,9 +142,9 @@ def withdraw(amount: uint256):
     @param amount Amount to withdraw
     """
     assert amount > 0, "SpendingLimiter: zero amount"
-    assert self.ownerBalance[msg.sender] >= amount, "SpendingLimiter: insufficient balance"
+    assert self.owner_balance[msg.sender] >= amount, "SpendingLimiter: insufficient balance"
     
-    self.ownerBalance[msg.sender] -= amount
+    self.owner_balance[msg.sender] -= amount
     
     success: bool = extcall IERC20(self.usdc).transfer(msg.sender, amount)
     assert success, "SpendingLimiter: transfer failed"
@@ -157,7 +157,7 @@ def withdraw(amount: uint256):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @external
-def authorizeAgent(
+def authorize_agent(
     agent: address,
     per_tx_limit: uint256,
     daily_limit: uint256,
@@ -173,33 +173,33 @@ def authorizeAgent(
     assert agent != empty(address), "SpendingLimiter: zero address"
     assert agent != msg.sender, "SpendingLimiter: cannot authorize self"
     
-    self.isAuthorized[msg.sender][agent] = True
-    self.perTxLimit[msg.sender][agent] = per_tx_limit
-    self.dailyLimit[msg.sender][agent] = daily_limit
-    self.totalLimit[msg.sender][agent] = total_limit
+    self.is_authorized[msg.sender][agent] = True
+    self.per_tx_limit[msg.sender][agent] = per_tx_limit
+    self.daily_limit[msg.sender][agent] = daily_limit
+    self.total_limit[msg.sender][agent] = total_limit
     
     log AgentAuthorized(
         owner=msg.sender,
         agent=agent,
-        perTxLimit=per_tx_limit,
-        dailyLimit=daily_limit,
-        totalLimit=total_limit
+        per_tx_limit=per_tx_limit,
+        daily_limit=daily_limit,
+        total_limit=total_limit
     )
 
 
 @external
-def revokeAgent(agent: address):
+def revoke_agent(agent: address):
     """
     @notice Revoke agent authorization
     @param agent The agent to revoke
     """
-    self.isAuthorized[msg.sender][agent] = False
+    self.is_authorized[msg.sender][agent] = False
     
     log AgentRevoked(owner=msg.sender, agent=agent)
 
 
 @external
-def updateLimits(
+def update_limits(
     agent: address,
     per_tx_limit: uint256,
     daily_limit: uint256,
@@ -212,18 +212,18 @@ def updateLimits(
     @param daily_limit New daily limit
     @param total_limit New total limit
     """
-    assert self.isAuthorized[msg.sender][agent], "SpendingLimiter: not authorized"
+    assert self.is_authorized[msg.sender][agent], "SpendingLimiter: not authorized"
     
-    self.perTxLimit[msg.sender][agent] = per_tx_limit
-    self.dailyLimit[msg.sender][agent] = daily_limit
-    self.totalLimit[msg.sender][agent] = total_limit
+    self.per_tx_limit[msg.sender][agent] = per_tx_limit
+    self.daily_limit[msg.sender][agent] = daily_limit
+    self.total_limit[msg.sender][agent] = total_limit
     
     log LimitsUpdated(
         owner=msg.sender,
         agent=agent,
-        perTxLimit=per_tx_limit,
-        dailyLimit=daily_limit,
-        totalLimit=total_limit
+        per_tx_limit=per_tx_limit,
+        daily_limit=daily_limit,
+        total_limit=total_limit
     )
 
 
@@ -240,38 +240,38 @@ def spend(owner: address, amount: uint256, recipient: address):
     @param recipient Address to send USDC to
     @dev Only authorized agents can call this
     """
-    assert self.isAuthorized[owner][msg.sender], "SpendingLimiter: not authorized"
+    assert self.is_authorized[owner][msg.sender], "SpendingLimiter: not authorized"
     assert amount > 0, "SpendingLimiter: zero amount"
     assert recipient != empty(address), "SpendingLimiter: zero recipient"
     
     # Check per-transaction limit
-    per_tx: uint256 = self.perTxLimit[owner][msg.sender]
+    per_tx: uint256 = self.per_tx_limit[owner][msg.sender]
     if per_tx > 0:
         assert amount <= per_tx, "SpendingLimiter: exceeds per-tx limit"
     
     # Reset daily spending if new day
     current_day: uint256 = block.timestamp // 86400
-    if current_day > self.lastSpendingDay[owner][msg.sender]:
-        self.dailySpent[owner][msg.sender] = 0
-        self.lastSpendingDay[owner][msg.sender] = current_day
+    if current_day > self.last_spending_day[owner][msg.sender]:
+        self.daily_spent[owner][msg.sender] = 0
+        self.last_spending_day[owner][msg.sender] = current_day
     
     # Check daily limit
-    daily: uint256 = self.dailyLimit[owner][msg.sender]
+    daily: uint256 = self.daily_limit[owner][msg.sender]
     if daily > 0:
-        assert self.dailySpent[owner][msg.sender] + amount <= daily, "SpendingLimiter: exceeds daily limit"
+        assert self.daily_spent[owner][msg.sender] + amount <= daily, "SpendingLimiter: exceeds daily limit"
     
     # Check total limit
-    total: uint256 = self.totalLimit[owner][msg.sender]
+    total: uint256 = self.total_limit[owner][msg.sender]
     if total > 0:
-        assert self.totalSpent[owner][msg.sender] + amount <= total, "SpendingLimiter: exceeds total limit"
+        assert self.total_spent[owner][msg.sender] + amount <= total, "SpendingLimiter: exceeds total limit"
     
     # Check owner balance
-    assert self.ownerBalance[owner] >= amount, "SpendingLimiter: insufficient balance"
+    assert self.owner_balance[owner] >= amount, "SpendingLimiter: insufficient balance"
     
     # Update tracking
-    self.dailySpent[owner][msg.sender] += amount
-    self.totalSpent[owner][msg.sender] += amount
-    self.ownerBalance[owner] -= amount
+    self.daily_spent[owner][msg.sender] += amount
+    self.total_spent[owner][msg.sender] += amount
+    self.owner_balance[owner] -= amount
     
     # Transfer
     success: bool = extcall IERC20(self.usdc).transfer(recipient, amount)
@@ -286,7 +286,7 @@ def spend(owner: address, amount: uint256, recipient: address):
 
 @external
 @view
-def canSpend(owner: address, agent: address, amount: uint256) -> bool:
+def can_spend(owner: address, agent: address, amount: uint256) -> bool:
     """
     @notice Check if agent can spend a given amount
     @param owner The owner
@@ -294,31 +294,31 @@ def canSpend(owner: address, agent: address, amount: uint256) -> bool:
     @param amount The amount to check
     @return True if the spend would succeed
     """
-    if not self.isAuthorized[owner][agent]:
+    if not self.is_authorized[owner][agent]:
         return False
     
     # Check per-tx limit
-    per_tx: uint256 = self.perTxLimit[owner][agent]
+    per_tx: uint256 = self.per_tx_limit[owner][agent]
     if per_tx > 0 and amount > per_tx:
         return False
     
     # Check daily limit (considering potential reset)
     current_day: uint256 = block.timestamp // 86400
-    daily_spent: uint256 = self.dailySpent[owner][agent]
-    if current_day > self.lastSpendingDay[owner][agent]:
+    daily_spent: uint256 = self.daily_spent[owner][agent]
+    if current_day > self.last_spending_day[owner][agent]:
         daily_spent = 0
     
-    daily: uint256 = self.dailyLimit[owner][agent]
+    daily: uint256 = self.daily_limit[owner][agent]
     if daily > 0 and daily_spent + amount > daily:
         return False
     
     # Check total limit
-    total: uint256 = self.totalLimit[owner][agent]
-    if total > 0 and self.totalSpent[owner][agent] + amount > total:
+    total: uint256 = self.total_limit[owner][agent]
+    if total > 0 and self.total_spent[owner][agent] + amount > total:
         return False
     
     # Check balance
-    if self.ownerBalance[owner] < amount:
+    if self.owner_balance[owner] < amount:
         return False
     
     return True
@@ -326,20 +326,20 @@ def canSpend(owner: address, agent: address, amount: uint256) -> bool:
 
 @external
 @view
-def getRemainingLimits(owner: address, agent: address) -> (uint256, uint256, uint256):
+def get_remaining_limits(owner: address, agent: address) -> (uint256, uint256, uint256):
     """
     @notice Get remaining spending limits for an agent
     @param owner The owner
     @param agent The agent
-    @return Tuple of (remainingDaily, remainingTotal, ownerBalance)
+    @return Tuple of (remainingDaily, remainingTotal, owner_balance)
     """
     # Calculate remaining daily (considering potential reset)
     current_day: uint256 = block.timestamp // 86400
-    daily_spent: uint256 = self.dailySpent[owner][agent]
-    if current_day > self.lastSpendingDay[owner][agent]:
+    daily_spent: uint256 = self.daily_spent[owner][agent]
+    if current_day > self.last_spending_day[owner][agent]:
         daily_spent = 0
     
-    daily: uint256 = self.dailyLimit[owner][agent]
+    daily: uint256 = self.daily_limit[owner][agent]
     remaining_daily: uint256 = 0
     if daily > 0:
         if daily > daily_spent:
@@ -348,29 +348,29 @@ def getRemainingLimits(owner: address, agent: address) -> (uint256, uint256, uin
         remaining_daily = max_value(uint256)  # No limit
     
     # Calculate remaining total
-    total: uint256 = self.totalLimit[owner][agent]
+    total: uint256 = self.total_limit[owner][agent]
     remaining_total: uint256 = 0
     if total > 0:
-        if total > self.totalSpent[owner][agent]:
-            remaining_total = total - self.totalSpent[owner][agent]
+        if total > self.total_spent[owner][agent]:
+            remaining_total = total - self.total_spent[owner][agent]
     else:
         remaining_total = max_value(uint256)  # No limit
     
-    return (remaining_daily, remaining_total, self.ownerBalance[owner])
+    return (remaining_daily, remaining_total, self.owner_balance[owner])
 
 
 @external
 @view
-def getAgentLimits(owner: address, agent: address) -> (uint256, uint256, uint256, bool):
+def get_agent_limits(owner: address, agent: address) -> (uint256, uint256, uint256, bool):
     """
     @notice Get configured limits for an agent
     @param owner The owner
     @param agent The agent
-    @return Tuple of (perTxLimit, dailyLimit, totalLimit, isAuthorized)
+    @return Tuple of (per_tx_limit, daily_limit, total_limit, is_authorized)
     """
     return (
-        self.perTxLimit[owner][agent],
-        self.dailyLimit[owner][agent],
-        self.totalLimit[owner][agent],
-        self.isAuthorized[owner][agent]
+        self.per_tx_limit[owner][agent],
+        self.daily_limit[owner][agent],
+        self.total_limit[owner][agent],
+        self.is_authorized[owner][agent]
     )

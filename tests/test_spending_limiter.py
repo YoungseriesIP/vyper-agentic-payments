@@ -49,7 +49,7 @@ class TestFundManagement:
             funded_usdc.approve(spending_limiter.address, amount)
             spending_limiter.deposit(amount)
         
-        assert spending_limiter.ownerBalance(alice) == amount
+        assert spending_limiter.owner_balance(alice) == amount
         assert funded_usdc.balanceOf(spending_limiter.address) == amount
 
     def test_withdraw(self, spending_limiter, funded_usdc, alice):
@@ -65,7 +65,7 @@ class TestFundManagement:
         with boa.env.prank(alice):
             spending_limiter.withdraw(50 * 10**6)
         
-        assert spending_limiter.ownerBalance(alice) == 50 * 10**6
+        assert spending_limiter.owner_balance(alice) == 50 * 10**6
         assert funded_usdc.balanceOf(alice) == balance_before + 50 * 10**6
 
     def test_withdraw_insufficient_balance_fails(self, spending_limiter, funded_usdc, alice):
@@ -91,39 +91,39 @@ class TestAgentAuthorization:
     def test_authorize_agent(self, spending_limiter, alice, agent):
         """Owner should be able to authorize an agent."""
         with boa.env.prank(alice):
-            spending_limiter.authorizeAgent(
+            spending_limiter.authorize_agent(
                 agent,
                 10 * 10**6,   # 10 USDC per tx
                 100 * 10**6,  # 100 USDC daily
                 1000 * 10**6  # 1000 USDC total
             )
         
-        assert spending_limiter.isAuthorized(alice, agent) is True
-        assert spending_limiter.perTxLimit(alice, agent) == 10 * 10**6
-        assert spending_limiter.dailyLimit(alice, agent) == 100 * 10**6
-        assert spending_limiter.totalLimit(alice, agent) == 1000 * 10**6
+        assert spending_limiter.is_authorized(alice, agent) is True
+        assert spending_limiter.per_tx_limit(alice, agent) == 10 * 10**6
+        assert spending_limiter.daily_limit(alice, agent) == 100 * 10**6
+        assert spending_limiter.total_limit(alice, agent) == 1000 * 10**6
 
     def test_authorize_self_fails(self, spending_limiter, alice):
         """Should not be able to authorize self."""
         with boa.env.prank(alice):
             with pytest.raises(boa.BoaError, match="cannot authorize self"):
-                spending_limiter.authorizeAgent(alice, 10**6, 10**6, 10**6)
+                spending_limiter.authorize_agent(alice, 10**6, 10**6, 10**6)
 
     def test_revoke_agent(self, spending_limiter, alice, agent):
         """Owner should be able to revoke agent."""
         with boa.env.prank(alice):
-            spending_limiter.authorizeAgent(agent, 10**6, 10**6, 10**6)
-            spending_limiter.revokeAgent(agent)
+            spending_limiter.authorize_agent(agent, 10**6, 10**6, 10**6)
+            spending_limiter.revoke_agent(agent)
         
-        assert spending_limiter.isAuthorized(alice, agent) is False
+        assert spending_limiter.is_authorized(alice, agent) is False
 
     def test_update_limits(self, spending_limiter, alice, agent):
         """Owner should be able to update limits."""
         with boa.env.prank(alice):
-            spending_limiter.authorizeAgent(agent, 10**6, 10**6, 10**6)
-            spending_limiter.updateLimits(agent, 20 * 10**6, 200 * 10**6, 2000 * 10**6)
+            spending_limiter.authorize_agent(agent, 10**6, 10**6, 10**6)
+            spending_limiter.update_limits(agent, 20 * 10**6, 200 * 10**6, 2000 * 10**6)
 
-        assert spending_limiter.perTxLimit(alice, agent) == 20 * 10**6
+        assert spending_limiter.per_tx_limit(alice, agent) == 20 * 10**6
 
 
 class TestSpending:
@@ -135,7 +135,7 @@ class TestSpending:
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 50 * 10**6, 100 * 10**6, 1000 * 10**6)
+            spending_limiter.authorize_agent(agent, 50 * 10**6, 100 * 10**6, 1000 * 10**6)
         
         charlie_balance_before = funded_usdc.balanceOf(charlie)
         
@@ -144,15 +144,15 @@ class TestSpending:
             spending_limiter.spend(alice, 25 * 10**6, charlie)
         
         assert funded_usdc.balanceOf(charlie) == charlie_balance_before + 25 * 10**6
-        assert spending_limiter.ownerBalance(alice) == 75 * 10**6
-        assert spending_limiter.totalSpent(alice, agent) == 25 * 10**6
+        assert spending_limiter.owner_balance(alice) == 75 * 10**6
+        assert spending_limiter.total_spent(alice, agent) == 25 * 10**6
 
     def test_spend_exceeds_per_tx_limit_fails(self, spending_limiter, funded_usdc, alice, agent, charlie):
         """Should fail if exceeds per-tx limit."""
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 10 * 10**6, 100 * 10**6, 1000 * 10**6)
+            spending_limiter.authorize_agent(agent, 10 * 10**6, 100 * 10**6, 1000 * 10**6)
         
         with boa.env.prank(agent):
             with pytest.raises(boa.BoaError, match="exceeds per-tx limit"):
@@ -163,7 +163,7 @@ class TestSpending:
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 50 * 10**6, 30 * 10**6, 1000 * 10**6)
+            spending_limiter.authorize_agent(agent, 50 * 10**6, 30 * 10**6, 1000 * 10**6)
         
         with boa.env.prank(agent):
             spending_limiter.spend(alice, 20 * 10**6, charlie)
@@ -177,7 +177,7 @@ class TestSpending:
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 50 * 10**6, 100 * 10**6, 30 * 10**6)  # 30 total
+            spending_limiter.authorize_agent(agent, 50 * 10**6, 100 * 10**6, 30 * 10**6)  # 30 total
         
         with boa.env.prank(agent):
             spending_limiter.spend(alice, 20 * 10**6, charlie)
@@ -201,7 +201,7 @@ class TestSpending:
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 50 * 10**6, 30 * 10**6, 1000 * 10**6)
+            spending_limiter.authorize_agent(agent, 50 * 10**6, 30 * 10**6, 1000 * 10**6)
         
         # Spend up to daily limit
         with boa.env.prank(agent):
@@ -228,22 +228,22 @@ class TestViewFunctions:
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 50 * 10**6, 100 * 10**6, 1000 * 10**6)
+            spending_limiter.authorize_agent(agent, 50 * 10**6, 100 * 10**6, 1000 * 10**6)
         
-        assert spending_limiter.canSpend(alice, agent, 40 * 10**6) is True
-        assert spending_limiter.canSpend(alice, agent, 60 * 10**6) is False  # Exceeds per-tx
+        assert spending_limiter.can_spend(alice, agent, 40 * 10**6) is True
+        assert spending_limiter.can_spend(alice, agent, 60 * 10**6) is False  # Exceeds per-tx
 
     def test_get_remaining_limits(self, spending_limiter, funded_usdc, alice, agent, charlie):
         """getRemainingLimits should return correct values."""
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 50 * 10**6, 80 * 10**6, 200 * 10**6)
+            spending_limiter.authorize_agent(agent, 50 * 10**6, 80 * 10**6, 200 * 10**6)
         
         with boa.env.prank(agent):
             spending_limiter.spend(alice, 30 * 10**6, charlie)
         
-        result = spending_limiter.getRemainingLimits(alice, agent)
+        result = spending_limiter.get_remaining_limits(alice, agent)
         
         assert result[0] == 50 * 10**6   # remaining daily (80 - 30)
         assert result[1] == 170 * 10**6  # remaining total (200 - 30)
@@ -252,9 +252,9 @@ class TestViewFunctions:
     def test_get_agent_limits(self, spending_limiter, alice, agent):
         """getAgentLimits should return configured limits."""
         with boa.env.prank(alice):
-            spending_limiter.authorizeAgent(agent, 10 * 10**6, 100 * 10**6, 1000 * 10**6)
+            spending_limiter.authorize_agent(agent, 10 * 10**6, 100 * 10**6, 1000 * 10**6)
         
-        result = spending_limiter.getAgentLimits(alice, agent)
+        result = spending_limiter.get_agent_limits(alice, agent)
         
         assert result[0] == 10 * 10**6    # perTxLimit
         assert result[1] == 100 * 10**6   # dailyLimit
@@ -272,7 +272,7 @@ class TestNoLimits:
         with boa.env.prank(alice):
             funded_usdc.approve(spending_limiter.address, 100 * 10**6)
             spending_limiter.deposit(100 * 10**6)
-            spending_limiter.authorizeAgent(agent, 0, 0, 0)  # No limits
+            spending_limiter.authorize_agent(agent, 0, 0, 0)  # No limits
         
         # Should be able to spend any amount up to balance
         with boa.env.prank(agent):
