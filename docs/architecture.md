@@ -120,51 +120,7 @@ Subscriber ──→ subscribe(plan) ──→ First payment
 Anyone ──→ processPayment() ──→ Next payment if due
 ```
 
-### Layer 4: Trust (ERC-8004 Contracts)
-
-The trust layer establishes agent identity and reputation:
-
-#### AgentIdentity (ERC-721)
-```
-Developer ──→ registerAgent(metadata) ──→ NFT minted
-                    │
-              agentId = tokenId
-                    │
-              Transferable ownership
-```
-
-#### AgentReputation
-```
-Agent ──→ recordInteraction(client) ──→ Interaction logged
-                    │
-Client ──→ submitFeedback(score, proof) ──→ Reputation updated
-                    │
-              Average score calculated
-              Tier assigned (Bronze → Platinum)
-```
-
-#### AgentValidation
-```
-Admin ──→ addValidator(address) ──→ Trusted validator
-                    │
-Validator ──→ validateTask(taskId, success) ──→ Validation recorded
-                    │
-              Can trigger escrow release
-```
-
 ## Data Flow
-
-### Payment Flow
-
-```
-1. Client discovers agent via AgentIdentity
-2. Client checks reputation via AgentReputation
-3. Client creates task via AgentEscrow (USDC locked)
-4. Agent completes work off-chain
-5. Client approves, USDC released
-6. Client submits feedback with payment proof
-7. Agent reputation updated
-```
 
 ### x402 Payment Flow
 
@@ -178,35 +134,12 @@ Validator ──→ validateTask(taskId, success) ──→ Validation recorded
 7. Client receives result + payment receipt
 ```
 
-## Contract Interactions
-
-```
-┌─────────────────┐     queries      ┌──────────────────┐
-│ AgentReputation │◄────────────────│ External Clients │
-└────────┬────────┘                  └────────┬─────────┘
-         │                                    │
-         │ checks                             │ uses
-         ▼                                    ▼
-┌─────────────────┐     validates    ┌──────────────────┐
-│  AgentIdentity  │◄────────────────│   AgentEscrow    │
-└─────────────────┘                  └──────────────────┘
-         ▲                                    │
-         │                                    │
-         │ references                         │ can trigger
-         │                                    ▼
-┌─────────────────┐                  ┌──────────────────┐
-│ AgentValidation │─────────────────►│  PaymentSplitter │
-└─────────────────┘     splits to    └──────────────────┘
-```
-
 ## Security Model
 
 ### Access Control
 
 | Contract | Admin Functions | Agent Functions | Public Functions |
 |----------|----------------|-----------------|------------------|
-| AgentIdentity | pause, updateURI | register | view |
-| AgentReputation | updateRegistry | recordInteraction | submitFeedback |
 | AgentEscrow | resolveDispute | completeTask | createTask, approve |
 | SpendingLimiter | - | spend | authorize, deposit |
 | PaymentSplitter | addPayee | - | deposit, withdraw |
@@ -215,9 +148,8 @@ Validator ──→ validateTask(taskId, success) ──→ Validation recorded
 ### Invariants
 
 1. **USDC Conservation** - Total deposits = Total withdrawals + locked
-2. **One Feedback Per Client** - Client can only rate agent once
-3. **Escrow Safety** - Funds locked until completion or dispute resolution
-4. **Spending Limits** - Daily/per-tx/total limits enforced atomically
+2. **Escrow Safety** - Funds locked until completion or dispute resolution
+3. **Spending Limits** - Daily/per-tx/total limits enforced atomically
 
 ## Gas Optimization
 
@@ -225,8 +157,6 @@ Vyper provides significant gas savings:
 
 | Operation | Solidity (est.) | Vyper (actual) | Savings |
 |-----------|-----------------|----------------|---------|
-| registerAgent | ~150k | ~95k | 37% |
-| submitFeedback | ~80k | ~55k | 31% |
 | createTask | ~120k | ~75k | 38% |
 
 Key optimizations:
@@ -239,15 +169,12 @@ Key optimizations:
 
 ```
 tests/
-├── conftest.py              # Shared fixtures
-├── test_agent_identity.py   # Identity tests (39)
-├── test_agent_reputation.py # Reputation tests (28)
-├── test_agent_validation.py # Validation tests (20)
-├── test_agent_escrow.py     # Escrow tests (24)
-├── test_spending_limiter.py # Limiter tests (20)
-├── test_payment_splitter.py # Splitter tests (27)
-├── test_subscription_manager.py # Subscription tests (27)
-└── test_integration_escrow_reputation.py # Integration (4)
+├── conftest.py                  # Shared fixtures
+├── test_agent_escrow.py         # Escrow tests
+├── test_spending_limiter.py     # Limiter tests
+├── test_payment_splitter.py     # Splitter tests
+├── test_subscription_manager.py # Subscription tests
+└── test_hackathon_challenges.py # Challenge verification tests
 ```
 
 Each test file covers:

@@ -6,41 +6,19 @@ This directory contains detailed documentation for each smart contract.
 
 | Contract | Description | Key Features |
 |----------|-------------|--------------|
-| [AgentIdentity](./AgentIdentity.md) | ERC-721 NFT registry for agents | Identity, ownership, metadata |
-| [AgentReputation](./AgentReputation.md) | On-chain reputation system | Feedback, scores, tiers |
-| [AgentValidation](./AgentValidation.md) | Third-party validation | Validators, task verification |
 | [AgentEscrow](./AgentEscrow.md) | Task payment escrow | Lock, complete, dispute |
 | [SpendingLimiter](./SpendingLimiter.md) | Agent authorization | Limits, delegation |
 | [PaymentSplitter](./PaymentSplitter.md) | Revenue distribution | Shares, withdrawals |
 | [SubscriptionManager](./SubscriptionManager.md) | Recurring payments | Plans, billing cycles |
 
-## Contract Dependencies
-
-```
-AgentIdentity (standalone)
-     │
-     ├──────────────┬──────────────┐
-     ▼              ▼              ▼
-AgentReputation  AgentValidation  AgentEscrow
-                                      │
-                                      ▼
-                               PaymentSplitter
-
-SpendingLimiter (standalone)
-SubscriptionManager (standalone)
-```
-
 ## Deployment Order
 
-When deploying, respect dependencies:
+All contracts require a USDC address. They can be deployed in any order:
 
-1. **AgentIdentity** - Deploy first (no dependencies)
-2. **SpendingLimiter** - Deploy anytime (no dependencies)
-3. **PaymentSplitter** - Deploy anytime (no dependencies)
-4. **SubscriptionManager** - Deploy anytime (no dependencies)
-5. **AgentReputation** - Deploy after AgentIdentity
-6. **AgentValidation** - Deploy after AgentIdentity
-7. **AgentEscrow** - Deploy after AgentIdentity, needs USDC address
+1. **AgentEscrow** - Requires USDC address + IdentityRegistry address
+2. **SpendingLimiter** - Requires USDC address
+3. **PaymentSplitter** - Requires USDC address
+4. **SubscriptionManager** - Requires USDC address
 
 ## Common Patterns
 
@@ -101,33 +79,13 @@ interface IERC20:
     def allowance(owner: address, spender: address) -> uint256: view
 ```
 
-## Events
-
-All contracts emit events for key actions:
-
-```python
-# Example events from AgentIdentity
-event AgentRegistered:
-    agentId: indexed(uint256)
-    owner: indexed(address)
-    tokenURI: String[256]
-
-event AgentUpdated:
-    agentId: indexed(uint256)
-    newTokenURI: String[256]
-
-event AgentStatusChanged:
-    agentId: indexed(uint256)
-    active: bool
-```
-
 ## Error Messages
 
 Contracts use descriptive revert messages:
 
 | Pattern | Example |
 |---------|---------|
-| Contract prefix | `"AgentIdentity: not owner"` |
+| Contract prefix | `"AgentEscrow: not poster"` |
 | State checks | `"AgentEscrow: task not active"` |
 | Auth checks | `"SpendingLimiter: not authorized"` |
 | Limit checks | `"SpendingLimiter: exceeds daily limit"` |
@@ -138,11 +96,8 @@ Each contract has comprehensive tests:
 
 ```bash
 # Run all tests for a contract
-python -m pytest tests/test_agent_identity.py -v
+python -m pytest tests/test_agent_escrow.py -v
 
-# Run specific test
-python -m pytest tests/test_agent_identity.py::test_register_agent -v
-
-# Run with coverage
-python -m pytest tests/test_agent_identity.py --cov=contracts
+# Run all tests
+python -m pytest tests/ -v
 ```

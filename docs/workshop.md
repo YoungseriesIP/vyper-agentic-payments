@@ -51,86 +51,7 @@ PRIVATE_KEY=0x...  # Your testnet private key
 
 ---
 
-## Part 1: Understanding the Contracts (20 minutes)
-
-### AgentIdentity - The Foundation
-
-Every agent needs an identity. Open `contracts/AgentIdentity.vy`:
-
-```python
-@external
-def registerAgent(metadataURI: String[256]) -> uint256:
-    """
-    Register a new agent. Mints an ERC-721 NFT to the caller.
-
-    @param metadataURI IPFS URI pointing to agent metadata
-    @return agentId The unique identifier for this agent
-    """
-    agentId: uint256 = self.nextAgentId
-    self.nextAgentId = agentId + 1
-
-    # Mint NFT to caller
-    self._mint(msg.sender, agentId)
-    self.tokenURIs[agentId] = metadataURI
-    self.agentActive[agentId] = True
-
-    log AgentRegistered(agentId, msg.sender, metadataURI)
-    return agentId
-```
-
-**Key concepts:**
-- Agent = ERC-721 NFT
-- Metadata stored on IPFS
-- Owner = msg.sender
-
-### Try it yourself:
-
-```bash
-# Run the identity tests
-python -m pytest tests/test_agent_identity.py -v -k "test_register"
-```
-
-### AgentReputation - Building Trust
-
-Agents earn reputation through feedback. Open `contracts/AgentReputation.vy`:
-
-```python
-@external
-def submitFeedback(
-    agentId: uint256,
-    score: uint256,
-    proofOfPayment: bytes32
-) -> uint256:
-    """
-    Submit feedback for an agent. Requires prior interaction.
-
-    @param agentId The agent to rate
-    @param score Rating from 0-100
-    @param proofOfPayment Transaction hash proving payment occurred
-    """
-    # Must have interacted with agent
-    assert self.hasInteracted[agentId][msg.sender], "No interaction recorded"
-
-    # Can only rate once
-    assert not self.clientFeedbackGiven[msg.sender][agentId], "Already rated"
-
-    # Score must be valid
-    assert score <= 100, "Score must be 0-100"
-
-    # Update reputation
-    self.totalScore[agentId] += score
-    self.feedbackCount[agentId] += 1
-    ...
-```
-
-**Key concepts:**
-- Proof-of-payment prevents fake reviews
-- One feedback per client per agent
-- Scores averaged over all feedback
-
----
-
-## Part 2: x402 Integration (30 minutes)
+## Part 1: x402 Integration (30 minutes)
 
 ### How x402 Works
 
@@ -257,13 +178,7 @@ python my_client.py
 
 ---
 
-## Part 3: Full Agent Workflow (30 minutes)
-
-Let's build a complete agent that:
-1. Registers identity
-2. Offers services
-3. Collects payments
-4. Builds reputation
+## Part 2: Full Agent Workflow (30 minutes)
 
 ### Step 1: Deploy Contracts
 
@@ -272,31 +187,9 @@ Let's build a complete agent that:
 python scripts/deploy_boa.py
 ```
 
-### Step 2: Register Your Agent
+### Step 2: Offer Services
 
-Using titanoboa to interact with the deployed contract:
-
-```python
-import boa
-import json
-
-# Load deployment info
-with open("deployments.json") as f:
-    deployments = json.load(f)
-
-address = deployments["5042002"]["AgentIdentity"]["address"]
-
-# Load the contract
-identity = boa.load_partial("contracts/AgentIdentity.vy").at(address)
-
-# Register your agent
-agent_id = identity.registerAgent("ipfs://QmYourAgentMetadata...")
-print(f"Agent registered with ID: {agent_id}")
-```
-
-### Step 3: Offer Services
-
-Update your server to record interactions:
+Update your server with a paywalled endpoint:
 
 ```python
 @app.route("/api/analyze")
@@ -305,31 +198,15 @@ def analyze():
     if not isinstance(result, PaymentInfo):
         return result
 
-    # Record interaction on-chain
-    reputation.recordInteraction(agent_id, result.payer)
-
     # Do the work
     analysis = analyze_text(request.args.get("text", ""))
 
     return jsonify(analysis)
 ```
 
-### Step 4: Build Reputation
-
-After clients receive service, they can submit feedback:
-
-```python
-# Client-side
-reputation.submitFeedback(
-    agent_id,
-    85,  # Score out of 100
-    payment_tx_hash,
-)
-```
-
 ---
 
-## Part 4: Advanced Patterns (20 minutes)
+## Part 3: Advanced Patterns (20 minutes)
 
 ### Pattern 1: Agent Escrow
 

@@ -9,8 +9,6 @@
 ## Project Overview
 
 This project provides a complete smart contract infrastructure for AI agents to:
-- **Register identities** as ERC-721 NFTs
-- **Build reputation** through verified on-chain feedback
 - **Process payments** via Circle's x402 Batching SDK
 - **Manage complex workflows** with escrow, subscriptions, and spending limits
 
@@ -29,15 +27,10 @@ This project provides a complete smart contract infrastructure for AI agents to:
 
 | Contract | Lines | Functions | Tests |
 |----------|-------|-----------|-------|
-| AgentIdentity | 413 | 25 | 39 |
-| AgentReputation | 289 | 18 | 28 |
-| AgentValidation | 234 | 14 | 20 |
 | AgentEscrow | 245 | 12 | 24 |
 | SpendingLimiter | 198 | 11 | 20 |
 | PaymentSplitter | 267 | 15 | 27 |
 | SubscriptionManager | 312 | 16 | 27 |
-
-**Total: ~1,958 lines of Vyper, 202 tests**
 
 ### x402 Integration
 
@@ -65,7 +58,7 @@ async with GatewayClient(chain="arcTestnet", private_key=KEY) as client:
 # Deploy to Arc Testnet via titanoboa
 python scripts/deploy_boa.py
 
-# All 7 contracts deployed with dependency management
+# Deploy contracts with dependency management
 ```
 
 ---
@@ -76,10 +69,9 @@ python scripts/deploy_boa.py
 
 An AI agent sells sentiment analysis services:
 
-1. Agent registers identity -> gets NFT #1
-2. Client discovers agent, pays $0.01 via x402
-3. Agent delivers analysis, client submits feedback
-4. Agent reputation increases -> attracts more clients
+1. Client discovers agent, pays $0.01 via x402
+2. Agent delivers analysis
+3. Gasless payment settled through Circle Gateway
 
 ### 2. Multi-Agent Collaboration
 
@@ -88,7 +80,6 @@ Three agents collaborate on a task:
 1. Lead agent creates escrow task for $50 USDC
 2. Worker agents claim subtasks
 3. PaymentSplitter distributes: 60% lead, 40% workers
-4. All verified on-chain with reputation updates
 
 ### 3. Agent Authorization
 
@@ -112,10 +103,6 @@ Enterprise deploys AI agents with spending controls:
 │  └─────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                    SMART CONTRACT LAYER                      │
-│  ┌─────────────┐ ┌──────────────┐ ┌────────────────┐        │
-│  │AgentIdentity│ │AgentReputation│ │AgentValidation │       │
-│  │  (ERC-721)  │ │  (Feedback)   │ │  (Validators)  │       │
-│  └─────────────┘ └──────────────┘ └────────────────┘        │
 │  ┌─────────────┐ ┌──────────────┐ ┌────────────────┐        │
 │  │ AgentEscrow │ │SpendingLimiter│ │PaymentSplitter │       │
 │  │  (Tasks)    │ │  (Limits)     │ │  (Revenue)     │       │
@@ -144,15 +131,13 @@ Enterprise deploys AI agents with spending controls:
 
 ```
 vyper-agentic-payments/
-├── contracts/                 # 7 Vyper smart contracts
-│   ├── AgentIdentity.vy      # ERC-721 agent registry
-│   ├── AgentReputation.vy    # Proof-of-payment feedback
-│   ├── AgentValidation.vy    # Third-party validators
+├── contracts/                 # Vyper smart contracts
 │   ├── AgentEscrow.vy        # Task payment escrow
 │   ├── SpendingLimiter.vy    # Agent spending controls
 │   ├── PaymentSplitter.vy    # Revenue distribution
-│   └── SubscriptionManager.vy # Recurring payments
-├── tests/                     # 202 Python tests
+│   ├── SubscriptionManager.vy # Recurring payments
+│   └── Vault.vy              # USDC deposit vault
+├── tests/                     # Python tests
 ├── scripts/                   # Python tooling
 │   ├── deploy_boa.py         # Deploy via titanoboa
 │   └── interact_boa.py       # Contract interaction

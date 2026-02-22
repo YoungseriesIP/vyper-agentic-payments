@@ -15,7 +15,7 @@ In agent-to-agent commerce:
 3. Resolution paths:
    - Agent A approves → funds release to Agent B
    - Timeout expires → funds refund to Agent A (poster)
-   - Dispute → requires validation from AgentValidation.vy
+   - Dispute → admin resolves
 
 ## Task Lifecycle
 
@@ -77,9 +77,7 @@ def getTaskCount() -> uint256
 
 ## Integration Dependencies
 
-- **AgentIdentity.vy** - Verifies agent IDs are valid
-- **AgentReputation.vy** - Trigger reputation feedback on completion
-- **AgentValidation.vy** - Dispute resolution via validators
+- **IdentityRegistry** (ERC-8004 lib) - Verifies agent IDs are valid
 - **USDC** - Payment token (Arc: `0x3600000000000000000000000000000000000000`)
 
 ## Usage Example
