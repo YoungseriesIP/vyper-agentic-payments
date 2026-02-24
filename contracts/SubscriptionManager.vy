@@ -99,6 +99,9 @@ subscription_started_at: public(HashMap[uint256, uint256])
 subscription_last_charge: public(HashMap[uint256, uint256])
 subscription_total_paid: public(HashMap[uint256, uint256])
 
+# Price locked at subscription time (protects against retroactive price changes)
+subscription_price: public(HashMap[uint256, uint256])
+
 # Subscriber lookup
 subscriber_to_subscription: public(HashMap[address, HashMap[uint256, uint256]])  # subscriber -> plan -> sub_id
 
@@ -151,7 +154,7 @@ def create_plan(price: uint256, interval: uint256, metadata: String[256] = "") -
 def update_plan_price(plan_id: uint256, new_price: uint256):
     """
     @notice Update plan price (provider only)
-    @dev Affects future charges, not existing subscriptions until renewal
+    @dev Only affects new subscriptions; existing subscriptions retain their locked-in price
     @param plan_id The plan ID
     @param new_price New USDC price
     """
@@ -182,6 +185,7 @@ def deactivate_plan(plan_id: uint256):
 def subscribe(plan_id: uint256) -> uint256:
     """
     @notice Subscribe to a plan and pay first interval
+    @dev Locks in the current plan price for all future charges
     @param plan_id The plan ID to subscribe to
     @return Subscription ID
     """
@@ -204,8 +208,9 @@ def subscribe(plan_id: uint256) -> uint256:
     self.subscription_status[subscription_id] = STATUS_ACTIVE
     self.subscription_started_at[subscription_id] = block.timestamp
     self.subscription_last_charge[subscription_id] = block.timestamp
+    self.subscription_price[subscription_id] = price
     self.subscription_total_paid[subscription_id] = price
-    
+
     self.subscriber_to_subscription[msg.sender][plan_id] = subscription_id
     
     log Subscribed(subscription_id=subscription_id, plan_id=plan_id, subscriber=msg.sender)
@@ -217,7 +222,7 @@ def subscribe(plan_id: uint256) -> uint256:
 def charge(subscription_id: uint256):
     """
     @notice Charge a subscription for the next interval
-    @dev Can be called by anyone, but payment goes to plan provider
+    @dev Can be called by anyone. Uses the price locked at subscription time.
     @param subscription_id The subscription ID
     """
     assert self.subscription_status[subscription_id] == STATUS_ACTIVE, "not active"
@@ -230,7 +235,7 @@ def charge(subscription_id: uint256):
     
     subscriber: address = self.subscription_subscriber[subscription_id]
     provider: address = self.plan_provider[plan_id]
-    price: uint256 = self.plan_price[plan_id]
+    price: uint256 = self.subscription_price[subscription_id]
     
     # Transfer payment
     success: bool = extcall IERC20(usdc).transferFrom(subscriber, provider, price)
@@ -356,11 +361,11 @@ def get_plan_info(plan_id: uint256) -> (address, uint256, uint256, bool, String[
 
 @view
 @external
-def get_subscription_info(subscription_id: uint256) -> (uint256, address, uint8, uint256, uint256, uint256):
+def get_subscription_info(subscription_id: uint256) -> (uint256, address, uint8, uint256, uint256, uint256, uint256):
     """
     @notice Get subscription information
     @param subscription_id The subscription ID
-    @return (plan_id, subscriber, status, started_at, last_charge, total_paid)
+    @return (plan_id, subscriber, status, started_at, last_charge, total_paid, price)
     """
     return (
         self.subscription_plan[subscription_id],
@@ -368,7 +373,8 @@ def get_subscription_info(subscription_id: uint256) -> (uint256, address, uint8,
         self.subscription_status[subscription_id],
         self.subscription_started_at[subscription_id],
         self.subscription_last_charge[subscription_id],
-        self.subscription_total_paid[subscription_id]
+        self.subscription_total_paid[subscription_id],
+        self.subscription_price[subscription_id]
     )
 
 @view
