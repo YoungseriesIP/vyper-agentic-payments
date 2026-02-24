@@ -217,6 +217,56 @@ class TestCharging:
         with pytest.raises(boa.BoaError, match="not active"):
             subscription_manager.charge(sub_id)
 
+    def test_price_change_does_not_affect_existing_subscription(
+        self, subscription_manager, funded_usdc, alice, bob
+    ):
+        """Price update should not change what existing subscribers are charged."""
+        with boa.env.prank(alice):
+            plan_id = subscription_manager.create_plan(10 * 10**6, HOUR, "")
+
+        with boa.env.prank(bob):
+            funded_usdc.approve(subscription_manager.address, 100 * 10**6)
+            sub_id = subscription_manager.subscribe(plan_id)
+
+        # Provider doubles the price
+        with boa.env.prank(alice):
+            subscription_manager.update_plan_price(plan_id, 20 * 10**6)
+
+        alice_balance_before = funded_usdc.balanceOf(alice)
+
+        boa.env.time_travel(seconds=HOUR + 1)
+        subscription_manager.charge(sub_id)
+
+        # Should charge the original 10 USDC, not the new 20 USDC
+        assert funded_usdc.balanceOf(alice) == alice_balance_before + 10 * 10**6
+        assert subscription_manager.subscription_total_paid(sub_id) == 20 * 10**6  # 10 + 10
+
+    def test_new_subscription_uses_updated_price(
+        self, subscription_manager, funded_usdc, alice, bob, charlie
+    ):
+        """New subscriptions should use the current plan price."""
+        with boa.env.prank(alice):
+            plan_id = subscription_manager.create_plan(10 * 10**6, HOUR, "")
+
+        # Bob subscribes at 10 USDC
+        with boa.env.prank(bob):
+            funded_usdc.approve(subscription_manager.address, 100 * 10**6)
+            sub_bob = subscription_manager.subscribe(plan_id)
+
+        # Provider updates price to 20 USDC
+        with boa.env.prank(alice):
+            subscription_manager.update_plan_price(plan_id, 20 * 10**6)
+
+        # Charlie subscribes at the new 20 USDC price
+        alice_balance_before = funded_usdc.balanceOf(alice)
+        with boa.env.prank(charlie):
+            funded_usdc.approve(subscription_manager.address, 100 * 10**6)
+            sub_charlie = subscription_manager.subscribe(plan_id)
+
+        assert funded_usdc.balanceOf(alice) == alice_balance_before + 20 * 10**6
+        assert subscription_manager.subscription_price(sub_bob) == 10 * 10**6
+        assert subscription_manager.subscription_price(sub_charlie) == 20 * 10**6
+
 
 class TestCancelPauseResume:
     """Tests for cancel, pause, resume."""
@@ -358,12 +408,13 @@ class TestViewFunctions:
             funded_usdc.approve(subscription_manager.address, 10 * 10**6)
             sub_id = subscription_manager.subscribe(plan_id)
         
-        plan, subscriber, status, started, last_charge, total_paid = subscription_manager.get_subscription_info(sub_id)
-        
+        plan, subscriber, status, started, last_charge, total_paid, price = subscription_manager.get_subscription_info(sub_id)
+
         assert plan == plan_id
         assert subscriber == bob
         assert status == STATUS_ACTIVE
         assert total_paid == 10 * 10**6
+        assert price == 10 * 10**6
 
     def test_get_subscription_id(self, subscription_manager, funded_usdc, alice, bob):
         """getSubscriptionId should return correct ID."""
