@@ -1,6 +1,6 @@
 # Track B — Circle Integration
 
-A checklist-style track covering the full Circle product stack on Arc. Each step builds on the previous. The goal is to touch every relevant Circle product in sequence, ending with a live x402 payment on-chain using [`circlekit`](https://github.com/lufa23/circle-titanoboa-sdk).
+Walk through Circle's products on Arc: API key, programmable wallet, contract deployment, x402 payment. Each step builds on the previous.
 
 You will need a Circle developer account. The free tier is sufficient for all steps.
 
