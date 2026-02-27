@@ -10,7 +10,7 @@ Three tracks for Circle's hackathon on Arc. All contracts deploy to Arc testnet 
 
 ### Track A — Vyper on Arc
 
-A step-by-step introduction to writing, deploying, and interacting with Vyper contracts on Arc. No Circle SDK required — just Vyper, Moccasin, and the chain.
+Write, deploy, and interact with Vyper contracts on Arc. No Circle SDK required — just Vyper, Moccasin, and the chain.
 
 | Step | Name | Type |
 |------|------|------|
@@ -21,7 +21,7 @@ A step-by-step introduction to writing, deploying, and interacting with Vyper co
 
 ### Track B — Circle Integration
 
-A checklist-style track covering the full Circle product stack on Arc. Each step builds on the previous. Ends with a live x402 payment on-chain using `circlekit`.
+Walk through Circle's products on Arc: API key, programmable wallet, contract deployment, x402 payment. Each step builds on the previous.
 
 | Step | Name | Type |
 |------|------|------|
@@ -68,8 +68,8 @@ challenges/
 ```
 
 Each challenge directory contains:
-- **`README.md`** — Instructions, spec, and hints
-- **`challenge.py`** — A template with `TODO` placeholders (code challenges only)
+- `README.md` — instructions, spec, and hints
+- `challenge.py` — template with `TODO` placeholders (code challenges only)
 
 ---
 
@@ -93,7 +93,7 @@ Each challenge directory contains:
 
 4. **Verify your balance** on the [Arc block explorer](https://explorer.arc.network)
 
-Track B additionally requires a [Circle Developer Console](https://console.circle.com) account (free tier is sufficient).
+Track B also requires a [Circle Developer Console](https://console.circle.com) account (free tier is sufficient).
 
 ---
 
