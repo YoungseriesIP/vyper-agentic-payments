@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/vyperlang/vyper/master/docs/logo/vyper.svg" width="140" alt="Vyper logo">
+  <img src="vyper-logo.png" width="140" alt="Vyper logo">
 </p>
 
 # vyper-agentic-payments
