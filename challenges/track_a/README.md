@@ -1,6 +1,6 @@
 # Track A — Vyper on Arc
 
-A step-by-step introduction to writing, deploying, and interacting with Vyper contracts on Arc. No Circle SDK required — just Vyper, Moccasin, and the chain.
+Write, deploy, and interact with Vyper contracts on Arc. No Circle SDK required — just Vyper, Moccasin, and the chain.
 
 ## Steps
 
