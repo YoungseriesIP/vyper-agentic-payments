@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vyperlang/vyper/master/docs/logo/vyper.svg" width="140" alt="Vyper logo">
+</p>
+
 # vyper-agentic-payments
 
 Vyper smart contracts and hackathon challenges for agentic payment workflows on Circle's Arc chain.
