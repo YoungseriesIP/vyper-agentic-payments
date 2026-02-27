@@ -26,10 +26,6 @@ x402 is per-call. There is no native concept of a recurring relationship, a bill
 - Agent-to-agent service agreements with defined billing periods
 - Data feed subscriptions where agents pay for continuous access to a stream
 
-## Why Vyper
-
-`amount_per_period * n_periods` overflows in a subscription contract that runs for years without checked arithmetic. Vyper's overflow protection is on by default.
-
 ## What to Implement
 
 Fill in `challenge.py` with functions that interact with `contracts/SubscriptionManager.vy`. See the docstrings for the exact interface.

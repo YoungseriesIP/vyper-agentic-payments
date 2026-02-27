@@ -31,10 +31,6 @@ x402 enforces payment at the protocol layer but has no opinion on how much an ag
 - Consumer agent products where a user sets weekly spending limits
 - Treasury management for multi-agent systems where individual agents draw from a shared pool with hard caps
 
-## Why Vyper
-
-No dynamic dispatch means a compromised agent contract cannot re-enter the limiter to bypass caps. This attack surface is closed at the language level.
-
 ## What to Implement
 
 Fill in `challenge.py` with functions that interact with `contracts/SpendingLimiter.vy`. See the docstrings for the exact interface.

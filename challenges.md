@@ -224,8 +224,6 @@ x402 enforces payment at the protocol layer but has no opinion on how much an ag
 - Consumer agent products where a user sets weekly spending limits
 - Treasury management for multi-agent systems where individual agents draw from a shared pool with hard caps
 
-**Why Vyper:** No dynamic dispatch means a compromised agent contract cannot re-enter the limiter to bypass caps. This attack surface is closed at the language level.
-
 ---
 
 ### C2. AgentEscrow with Hash-Commitment Release
@@ -253,8 +251,6 @@ x402 settles payment on delivery of an HTTP response. It has no mechanism to ver
 - Bounty boards where agents post tasks, other agents complete them, and a verifier adjudicates
 - Data labeling pipelines with payment gated on quality checks
 - Multi-step agent workflows where each step's output is an input to the next, and payment for each step is conditional on the next step accepting it
-
-**Why Vyper:** Escrow state machines — locked, submitted, verified, disputed, settled — must have no reachable invalid state. Vyper's lack of inheritance means there is no parent contract introducing state you did not write.
 
 ---
 
@@ -286,8 +282,6 @@ x402 is per-call. There is no native concept of a recurring relationship, a bill
 - Agent-to-agent service agreements with defined billing periods
 - Data feed subscriptions where agents pay for continuous access to a stream
 
-**Why Vyper:** `amount_per_period * n_periods` overflows in a subscription contract that runs for years without checked arithmetic. Vyper's overflow protection is on by default.
-
 ---
 
 ### C4. Atomic PaymentSplitter for Multi-Agent Workflows
@@ -313,8 +307,6 @@ x402 sends payment to one address. Splitting that payment across multiple recipi
 - Orchestrator agents that coordinate specialist sub-agents and distribute payment in proportion to contribution
 - Royalty splits for AI-generated content across model provider, fine-tuner, and infrastructure
 - Revenue sharing in multi-vendor agent marketplaces
-
-**Why Vyper:** Fixed-size arrays make the recipient list tamper-resistant at compile time. Dynamic arrays in Solidity allow a compromised owner to append recipients after deployment.
 
 ---
 
@@ -345,8 +337,6 @@ Scope this in your README: on Arc, with sub-second finality and USDC gas, channe
 - Long-running agent sessions (code generation, research, multi-step workflows) where per-call settlement overhead compounds
 - Agent-to-agent data streaming with continuous micropayment settlement at session end
 - High-frequency inference APIs where on-chain latency per call is unacceptable
-
-**Why Vyper:** Payment channels have a documented history of signature malleability bugs in Solidity. Vyper's built-in `ecrecover`, no fallback functions, and no dynamic dispatch close that attack surface.
 
 ---
 

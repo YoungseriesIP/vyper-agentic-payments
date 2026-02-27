@@ -33,10 +33,6 @@ x402 generates one on-chain transaction per API call. An agent session with hund
 - Agent-to-agent data streaming with continuous micropayment settlement at session end
 - High-frequency inference APIs where on-chain latency per call is unacceptable
 
-## Why Vyper
-
-Payment channels have a documented history of signature malleability bugs in Solidity. Vyper's built-in `ecrecover`, no fallback functions, and no dynamic dispatch close that attack surface.
-
 ## What to Implement
 
 Fill in `challenge.py` with functions that interact with the payment channel contract. The `PaymentChannel.vy` contract is not yet implemented — this challenge is spec-only until the contract is written. See the docstrings for the target interface.

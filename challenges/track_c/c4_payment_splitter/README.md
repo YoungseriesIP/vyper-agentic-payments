@@ -24,10 +24,6 @@ x402 sends payment to one address. Splitting that payment across multiple recipi
 - Royalty splits for AI-generated content across model provider, fine-tuner, and infrastructure
 - Revenue sharing in multi-vendor agent marketplaces
 
-## Why Vyper
-
-Fixed-size arrays make the recipient list tamper-resistant at compile time. Dynamic arrays in Solidity allow a compromised owner to append recipients after deployment.
-
 ## What to Implement
 
 Fill in `challenge.py` with functions that interact with `contracts/PaymentSplitter.vy`. See the docstrings for the exact interface.

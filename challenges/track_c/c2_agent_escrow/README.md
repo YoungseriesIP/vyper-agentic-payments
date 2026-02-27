@@ -31,10 +31,6 @@ x402 settles payment on delivery of an HTTP response. It has no mechanism to ver
 - Data labeling pipelines with payment gated on quality checks
 - Multi-step agent workflows where each step's output is an input to the next, and payment for each step is conditional on the next step accepting it
 
-## Why Vyper
-
-Escrow state machines — locked, submitted, verified, disputed, settled — must have no reachable invalid state. Vyper's lack of inheritance means there is no parent contract introducing state you did not write.
-
 ## What to Implement
 
 Fill in `challenge.py` with functions that interact with `contracts/AgentEscrow.vy`. See the docstrings for the exact interface.
