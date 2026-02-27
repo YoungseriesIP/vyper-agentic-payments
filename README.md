@@ -2,7 +2,6 @@
 
 Vyper smart contracts and hackathon challenges for agentic payment workflows on Circle's Arc chain.
 
-[![Tests](https://img.shields.io/badge/tests-141%20passing-success)](./tests)
 [![Vyper](https://img.shields.io/badge/vyper-0.4.x-blue)](https://vyperlang.org)
 [![Arc Testnet](https://img.shields.io/badge/chain-Arc%20Testnet-purple)](https://developers.circle.com/w3s/arc)
 
@@ -31,7 +30,6 @@ Run tests:
 
 ```bash
 pytest tests/ -q
-# 141 passed, 2 skipped
 ```
 
 Start here: `challenges/track_a/`
