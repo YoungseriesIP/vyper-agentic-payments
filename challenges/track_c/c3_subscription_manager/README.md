@@ -18,7 +18,7 @@ A Vyper subscription contract where:
 
 ## What This Enables Beyond Vanilla x402
 
-x402 is per-call. There is no native concept of a recurring relationship, a billing period, or a refundable balance. This contract adds those: predictable revenue for providers, cancellation rights for subscribers, and metered billing for variable usage — all enforced on-chain.
+x402 is per-call. There is no native concept of a recurring relationship, a billing period, or a refundable balance. This contract adds billing periods, cancellation with pro-rata refunds, and metered usage charges, all on-chain.
 
 ## Product Directions
 
