@@ -36,9 +36,9 @@ Start here: `challenges/track_a/`
 
 ## Track A — Vyper Basics
 
-Learn Vyper from scratch: install the toolchain, write a USDC vault contract, build a test suite, and register an ERC-8004 agent identity on Arc Testnet (using the deployed registry as an external dependency — nothing to implement yourself).
+Install the toolchain, write a USDC vault contract, build a test suite, and register an ERC-8004 agent identity on Arc Testnet. The identity registry is already deployed; you just call it.
 
-No Circle account needed. Everything runs in titanoboa's local VM.
+No Circle account needed. A1-A3 run locally in titanoboa; A4 deploys to Arc Testnet.
 
 | Challenge | What you do |
 |-----------|-------------|
@@ -53,7 +53,7 @@ Entry point: [challenges/track_a/README.md](challenges/track_a/README.md)
 
 Connect to Circle's infrastructure: get an API key, provision a programmable wallet, deploy a contract from it, and make an x402 payment on-chain.
 
-**Prerequisites — you need all of this before B3/B4 will work:**
+You need all of these before B3/B4 will work:
 
 1. Complete Track A first (you need a funded Arc testnet wallet)
 2. Create a free Circle developer account at <https://console.circle.com>
