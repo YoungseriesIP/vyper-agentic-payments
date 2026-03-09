@@ -13,9 +13,9 @@ Vyper smart contracts and hackathon challenges for agentic payment workflows on 
 
 | Track | Focus | Needs Circle account? |
 |-------|-------|-----------------------|
-| **A** | Vyper basics — write, test, deploy a vault | No |
-| **B** | Circle integration — API key, programmable wallet, x402 payment | Yes |
-| **C** | Advanced payment primitives — escrow, limits, splits, subscriptions | Optional |
+| **A** | Vyper basics: write, test, deploy a vault | No |
+| **B** | Circle integration: API key, programmable wallet, x402 payment | Yes |
+| **C** | Advanced payment primitives: escrow, limits, splits, subscriptions | Optional |
 
 ## Quick Start
 
@@ -38,7 +38,7 @@ pytest tests/ -q
 
 Start here: `challenges/track_a/`
 
-## Track A — Vyper Basics
+## Track A: Vyper Basics
 
 Install the toolchain, write a USDC vault contract, build a test suite, and register an ERC-8004 agent identity on Arc Testnet. The identity registry is already deployed; you just call it.
 
@@ -53,7 +53,7 @@ No Circle account needed. A1-A3 run locally in titanoboa; A4 deploys to Arc Test
 
 Entry point: [challenges/track_a/README.md](challenges/track_a/README.md)
 
-## Track B — Circle Integration
+## Track B: Circle Integration
 
 Connect to Circle's infrastructure: get an API key, provision a programmable wallet, deploy a contract from it, and make an x402 payment on-chain.
 
@@ -64,7 +64,7 @@ You need all of these before B3/B4 will work:
 3. From the Console: generate a `CIRCLE_API_KEY` and `CIRCLE_ENTITY_SECRET`
 4. Copy `.env.example` to `.env` and fill in both values
 
-Steps are sequential — do them in order:
+Steps are sequential. Do them in order:
 
 | Challenge | What you do |
 |-----------|-------------|
@@ -75,7 +75,7 @@ Steps are sequential — do them in order:
 
 Entry point: [challenges/track_b/README.md](challenges/track_b/README.md)
 
-## Track C — Advanced Payment Primitives
+## Track C: Advanced Payment Primitives
 
 Four payment contracts with working scaffolds. Each challenge gives you a starting-point contract and a spec to extend. Circle integration is optional.
 
@@ -94,7 +94,7 @@ Four payment contracts with working scaffolds. Each challenge gives you a starti
 | C4 | `PaymentSplitter.vy` |
 | C5 | Payment channel (bonus) |
 
-The scaffold contracts have known issues by design — finding and fixing them is part of the challenge.
+The scaffold contracts have known issues by design; finding and fixing them is part of the challenge.
 
 Entry point: [challenges/track_c/README.md](challenges/track_c/README.md)
 
@@ -113,19 +113,19 @@ Entry point: [challenges/track_c/README.md](challenges/track_c/README.md)
 ```
 vyper-agentic-payments/
 ├── contracts/
-│   ├── Vault.vy                  # Track A — USDC vault
-│   ├── AgentEscrow.vy            # Track C — task escrow
-│   ├── SpendingLimiter.vy        # Track C — agent spend limits
-│   ├── PaymentSplitter.vy        # Track C — revenue distribution
-│   ├── SubscriptionManager.vy    # Track C — recurring payments
+│   ├── Vault.vy                  # Track A: USDC vault
+│   ├── AgentEscrow.vy            # Track C: task escrow
+│   ├── SpendingLimiter.vy        # Track C: agent spend limits
+│   ├── PaymentSplitter.vy        # Track C: revenue distribution
+│   ├── SubscriptionManager.vy    # Track C: recurring payments
 │   └── interfaces/
 │       ├── IERC20.vy
 │       ├── IERC721.vy
 │       └── IERC721Receiver.vy
 ├── challenges/
-│   ├── track_a/                  # A1–A4: Vyper basics
-│   ├── track_b/                  # B1–B4: Circle integration
-│   └── track_c/                  # C1–C5: Payment primitives
+│   ├── track_a/                  # A1-A4: Vyper basics
+│   ├── track_b/                  # B1-B4: Circle integration
+│   └── track_c/                  # C1-C5: Payment primitives
 ├── tests/
 │   ├── conftest.py
 │   ├── test_agent_escrow.py
@@ -158,7 +158,7 @@ vyper-agentic-payments/
 
 ## License
 
-MIT — see [LICENSE](./LICENSE)
+MIT - see [LICENSE](./LICENSE)
 
 ---
 

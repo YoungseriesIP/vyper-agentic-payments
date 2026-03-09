@@ -8,9 +8,9 @@ All contracts deploy to Arc testnet (Chain ID: `5042002`). USDC is the native ga
 
 ---
 
-## Track A — Vyper on Arc
+## Track A: Vyper on Arc
 
-A step-by-step introduction to writing, deploying, and interacting with Vyper contracts on Arc. No Circle SDK required here — just Vyper, Moccasin, and the chain.
+A step-by-step introduction to writing, deploying, and interacting with Vyper contracts on Arc. No Circle SDK required here, just Vyper, Moccasin, and the chain.
 
 This track uses [Moccasin](https://cyfrin.github.io/moccasin/) as the project framework. Add the ERC-8004 reference implementation and the Circle SDK as dependencies in `moccasin.toml`:
 
@@ -69,13 +69,13 @@ Using the `IdentityRegistry` from the dependency you added in the setup step:
 - Call `register` to register the contract you deployed in A2 as an agent, including a metadata URI pointing to a JSON file describing what it does
 - Verify the registration by calling `ownerOf` with the returned token ID
 
-This is the same pattern Track C contracts will follow — registering contract instances as agents gives them a verifiable on-chain identity that other contracts and off-chain tooling can resolve.
+This is the same pattern Track C contracts will follow. Registering contract instances as agents gives them a verifiable on-chain identity that other contracts and off-chain tooling can resolve.
 
 **Checkpoint:** A transaction on the block explorer showing your contract registered in the `IdentityRegistry`. The token ID and metadata URI visible on-chain.
 
 ---
 
-## Track B — Circle Integration
+## Track B: Circle Integration
 
 A checklist-style track covering the full Circle product stack on Arc. Each step builds on the previous. The goal is to touch every relevant Circle product in sequence, ending with a live x402 payment on-chain using `circle-titanoboa-sdk` ([`circlekit`](https://github.com/lufa23/circle-titanoboa-sdk)).
 
@@ -132,7 +132,7 @@ contract = boa.load("contracts/Vault.vy")  # your A2 contract
 
 Set up a local x402-protected endpoint using `circlekit`'s server middleware, then pay it from your Circle Wallet using `GatewayClient`.
 
-**Server side** — protect an endpoint with `create_gateway_middleware`:
+**Server side**: protect an endpoint with `create_gateway_middleware`:
 
 ```python
 from fastapi import FastAPI, Request
@@ -163,7 +163,7 @@ async def data(request: Request):
     return resp
 ```
 
-**Client side** — pay from your Circle Wallet:
+**Client side**: pay from your Circle Wallet:
 
 ```python
 import asyncio
@@ -186,11 +186,11 @@ asyncio.run(main())
 
 ---
 
-## Track C — Advanced Challenges
+## Track C: Advanced Challenges
 
 Five contract primitives. Each one extends what vanilla x402 can do. Pick one or more.
 
-The ERC-8004 Vyper reference implementation is available as a Moccasin dependency (see Track A setup). Import and extend it where relevant. Each challenge is an independent contract — you don't need to complete them in order.
+The ERC-8004 Vyper reference implementation is available as a Moccasin dependency (see Track A setup). Import and extend it where relevant. Each challenge is an independent contract; you don't need to complete them in order.
 
 Circle integration is optional in this track. If you want to wire up a Circle Programmable Wallet as the agent, use the patterns from Track B.
 
@@ -208,7 +208,7 @@ A Vyper contract that sits between an agent wallet and its USDC. It enforces:
 - A per-recipient cap
 - An allowlist of recipient addresses
 
-All three on every outgoing transfer, at the contract layer. If the daily cap is hit, outgoing transfers halt until the owner co-signs a resumption — the agent cannot unilaterally resume.
+All three on every outgoing transfer, at the contract layer. If the daily cap is hit, outgoing transfers halt until the owner co-signs a resumption. The agent cannot unilaterally resume.
 
 Key functions: `authorize_spend(recipient, amount)`, `set_limit(agent, amount, window)`, `emergency_pause(agent)`, `resume(agent)`.
 
@@ -216,7 +216,7 @@ One design decision to document: what happens when an agent is at 49.9 USDC of a
 
 **What this enables beyond vanilla x402:**
 
-x402 enforces payment at the protocol layer but has no opinion on how much an agent is allowed to spend. That enforcement lives in application code today — a runtime setting, an SDK config, a server-side check. A SpendingLimiter moves that constraint on-chain, independent of whatever the agent code does or whatever state the runtime is in.
+x402 enforces payment at the protocol layer but has no opinion on how much an agent is allowed to spend. That enforcement lives in application code today: a runtime setting, an SDK config, a server-side check. A SpendingLimiter moves that constraint on-chain, independent of whatever the agent code does or whatever state the runtime is in.
 
 **Product directions:**
 
@@ -244,7 +244,7 @@ The verifier can be a multisig, an oracle, or a second AI agent. The contract en
 
 **What this enables beyond vanilla x402:**
 
-x402 settles payment on delivery of an HTTP response. It has no mechanism to verify the quality or correctness of what was delivered. This contract holds payment in escrow until a verification step completes — the trust problem moves from "did the server respond?" to "did the server deliver what was agreed?"
+x402 settles payment on delivery of an HTTP response. It has no mechanism to verify the quality or correctness of what was delivered. This contract holds payment in escrow until a verification step completes. The trust problem moves from "did the server respond?" to "did the server deliver what was agreed?"
 
 **Product directions:**
 
@@ -261,7 +261,7 @@ x402 settles payment on delivery of an HTTP response. It has no mechanism to ver
 A Vyper subscription contract where:
 
 - Subscriber calls `subscribe(provider, amount_per_period, period)` and pre-funds N intervals
-- Anyone can call `settle(subscriber, provider)` once `block.timestamp >= last_settled + interval` — no trusted scheduler, no cron job, no keeper network required
+- Anyone can call `settle(subscriber, provider)` once `block.timestamp >= last_settled + interval`. No trusted scheduler, no cron job, no keeper network required
 - `cancel(provider)` returns `balance - pro_rata_owed` to the subscriber in the same transaction, calculated on-chain
 - Provider can only `withdraw()` accrued settled intervals, never future ones
 - `add_metered_charge(subscriber, units)` lets the provider bill usage above the flat rate at a per-unit price set at subscription creation
@@ -274,7 +274,7 @@ Edge cases to handle and document:
 
 **What this enables beyond vanilla x402:**
 
-x402 is per-call. There is no native concept of a recurring relationship, a billing period, or a refundable balance. This contract adds those: predictable revenue for providers, cancellation rights for subscribers, and metered billing for variable usage — all enforced on-chain.
+x402 is per-call. There is no native concept of a recurring relationship, a billing period, or a refundable balance. This contract adds those: predictable revenue for providers, cancellation rights for subscribers, and metered billing for variable usage, all enforced on-chain.
 
 **Product directions:**
 
@@ -292,7 +292,7 @@ A Vyper PaymentSplitter where:
 
 - Recipients and shares in basis points are set at deploy time (shares must sum to exactly 10000)
 - `distribute(amount)` sends each recipient their proportional share atomically in one transaction
-- A pull variant: `accrue(amount)` increments each recipient's claimable balance; recipients call `claim()` themselves — avoids the failure mode where one recipient is a contract that reverts on receive
+- A pull variant: `accrue(amount)` increments each recipient's claimable balance; recipients call `claim()` themselves. This avoids the failure mode where one recipient is a contract that reverts on receive
 - Owner can update shares behind a timelock: `propose_split_update(new_recipients, new_shares)` queues a change for N blocks; the change cannot apply mid-session
 - One event per recipient per distribution with the exact amount sent
 
@@ -300,7 +300,7 @@ Document explicitly where the remainder goes when `amount` does not divide evenl
 
 **What this enables beyond vanilla x402:**
 
-x402 sends payment to one address. Splitting that payment across multiple recipients — a platform fee, a provider, a referrer — requires either multiple transactions or an intermediary. This contract makes multi-party splits atomic and auditable in a single on-chain transaction.
+x402 sends payment to one address. Splitting that payment across multiple recipients (a platform fee, a provider, a referrer) requires either multiple transactions or an intermediary. This contract makes multi-party splits atomic and auditable in a single on-chain transaction.
 
 **Product directions:**
 
@@ -316,19 +316,19 @@ x402 sends payment to one address. Splitting that payment across multiple recipi
 
 A Vyper bidirectional payment channel:
 
-- `open_channel(payee, expiry)` — payer deposits USDC, sets expiry block
+- `open_channel(payee, expiry)`: payer deposits USDC, sets expiry block
 - Off-chain: payer signs incremental balance updates with a monotonic nonce. Nothing goes on-chain between open and close.
-- `cooperative_close(channel_id, amount, payer_sig, payee_sig)` — both parties sign final state, channel closes immediately, funds split per final amount
-- `unilateral_close(channel_id, amount, sig)` — one party submits latest signed state, challenge period begins
-- `challenge(channel_id, higher_amount, higher_sig)` — counterparty submits a higher-nonce state to override during the challenge window
-- `finalize(channel_id)` — callable after the challenge period expires with no valid challenge; splits funds per last accepted state
-- `reclaim(channel_id)` — payer reclaims all funds if channel expires with no activity from payee
+- `cooperative_close(channel_id, amount, payer_sig, payee_sig)`: both parties sign final state, channel closes immediately, funds split per final amount
+- `unilateral_close(channel_id, amount, sig)`: one party submits latest signed state, challenge period begins
+- `challenge(channel_id, higher_amount, higher_sig)`: counterparty submits a higher-nonce state to override during the challenge window
+- `finalize(channel_id)`: callable after the challenge period expires with no valid challenge; splits funds per last accepted state
+- `reclaim(channel_id)`: payer reclaims all funds if channel expires with no activity from payee
 
-Invariants to enforce: `finalize` cannot succeed before the challenge window closes. `reclaim` cannot succeed before `expiry`. `higher_amount` in `challenge` must be strictly greater than the contested amount. Signature verification uses `ecrecover` — validate the signer matches the expected party before accepting any state update.
+Invariants to enforce: `finalize` cannot succeed before the challenge window closes. `reclaim` cannot succeed before `expiry`. `higher_amount` in `challenge` must be strictly greater than the contested amount. Signature verification uses `ecrecover`. Validate the signer matches the expected party before accepting any state update.
 
 **What this enables beyond vanilla x402:**
 
-x402 generates one on-chain transaction per API call. An agent session with hundreds of calls generates hundreds of transactions. A payment channel collapses the entire session into two on-chain transactions — open and close — regardless of how many calls happened in between.
+x402 generates one on-chain transaction per API call. An agent session with hundreds of calls generates hundreds of transactions. A payment channel collapses the entire session into two on-chain transactions (open and close) regardless of how many calls happened in between.
 
 Scope this in your README: on Arc, with sub-second finality and USDC gas, channels make sense for sessions with hundreds to thousands of calls. For ten calls, per-call settlement is probably simpler and cheaper.
 
@@ -359,8 +359,8 @@ Scope this in your README: on Arc, with sub-second finality and USDC gas, channe
 - [Circle developer console](https://console.circle.com)
 - [x402 protocol spec](https://x402.org)
 - [Vyper documentation](https://docs.vyperlang.org)
-- [Moccasin](https://cyfrin.github.io/moccasin/) — Vyper project framework, used for dependency management and deployment
-- [Titanoboa](https://github.com/vyperlang/titanoboa) — Vyper interpreter, useful for local testing
-- [circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk) — Python SDK for x402 with Circle Gateway, built for the Vyper ecosystem
-- [erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper) — Vyper reference implementation of ERC-8004: Trustless Agents
+- [Moccasin](https://cyfrin.github.io/moccasin/): Vyper project framework, used for dependency management and deployment
+- [Titanoboa](https://github.com/vyperlang/titanoboa): Vyper interpreter, useful for local testing
+- [circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk): Python SDK for x402 with Circle Gateway, built for the Vyper ecosystem
+- [erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper): Vyper reference implementation of ERC-8004: Trustless Agents
 - [EIP-8004 spec](https://eips.ethereum.org/EIPS/eip-8004)

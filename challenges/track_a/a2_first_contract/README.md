@@ -33,9 +33,9 @@ vault.balances(depositor_address)  # returns uint256
 
 Fill in `challenge.py`:
 
-1. `deploy_vault(usdc_address)` — deploy the Vault contract and return the instance
-2. `deposit(vault, usdc, depositor, amount)` — approve and deposit USDC into the vault
-3. `withdraw(vault, depositor, amount)` — withdraw USDC from the vault
+1. `deploy_vault(usdc_address)`: deploy the Vault contract and return the instance
+2. `deposit(vault, usdc, depositor, amount)`: approve and deposit USDC into the vault
+3. `withdraw(vault, depositor, amount)`: withdraw USDC from the vault
 
 ## Hints
 

@@ -72,7 +72,7 @@ def propose_split_update(
 ):
     """
     Owner queues a share update behind a timelock. The change cannot apply
-    mid-session — it takes effect after N blocks.
+    mid-session. It takes effect after N blocks.
 
     Args:
         splitter: Deployed PaymentSplitter contract instance.

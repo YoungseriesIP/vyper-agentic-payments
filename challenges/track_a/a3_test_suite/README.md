@@ -6,19 +6,19 @@ Using Titanoboa or Moccasin's testing utilities, write a test suite for your A2 
 
 Your tests must cover:
 
-1. **Successful deposit and withdrawal** — depositor deposits USDC, then withdraws the full balance. Vault balance returns to zero, depositor balance is restored.
+1. **Successful deposit and withdrawal**: depositor deposits USDC, then withdraws the full balance. Vault balance returns to zero, depositor balance is restored.
 
-2. **Withdrawal by a non-depositor reverts** — a different address attempts to withdraw from a depositor's balance. The transaction must revert.
+2. **Withdrawal by a non-depositor reverts**: a different address attempts to withdraw from a depositor's balance. The transaction must revert.
 
-3. **Correct balance accounting after multiple deposits** — the same depositor deposits twice. The vault tracks the cumulative balance correctly.
+3. **Correct balance accounting after multiple deposits**: the same depositor deposits twice. The vault tracks the cumulative balance correctly.
 
 ## What to Implement
 
 Fill in `challenge.py` with three test functions:
 
-- `test_deposit_and_withdraw(vault, usdc, depositor)` — happy path
-- `test_non_depositor_reverts(vault, usdc, depositor, non_depositor)` — access control
-- `test_multiple_deposits(vault, usdc, depositor)` — cumulative accounting
+- `test_deposit_and_withdraw(vault, usdc, depositor)`: happy path
+- `test_non_depositor_reverts(vault, usdc, depositor, non_depositor)`: access control
+- `test_multiple_deposits(vault, usdc, depositor)`: cumulative accounting
 
 Each function receives pre-deployed contract instances and funded addresses. See the docstrings in `challenge.py` for the exact interface.
 

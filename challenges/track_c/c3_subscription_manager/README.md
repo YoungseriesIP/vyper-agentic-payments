@@ -5,7 +5,7 @@
 A Vyper subscription contract where:
 
 - Subscriber calls `subscribe(provider, amount_per_period, period)` and pre-funds N intervals
-- Anyone can call `settle(subscriber, provider)` once `block.timestamp >= last_settled + interval` — no trusted scheduler, no cron job, no keeper network required
+- Anyone can call `settle(subscriber, provider)` once `block.timestamp >= last_settled + interval`. No trusted scheduler, no cron job, no keeper network required
 - `cancel(provider)` returns `balance - pro_rata_owed` to the subscriber in the same transaction, calculated on-chain
 - Provider can only `withdraw()` accrued settled intervals, never future ones
 - `add_metered_charge(subscriber, units)` lets the provider bill usage above the flat rate at a per-unit price set at subscription creation

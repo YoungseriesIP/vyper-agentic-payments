@@ -26,7 +26,7 @@ INTEGRATION WITH x402:
     4. If within limits, agent proceeds with x402 payment
     
     # NOTE: The agent's client code checks this contract before spending.
-    # The SDK itself doesn't enforce these limits — it's an additional safety
+    # The SDK itself doesn't enforce these limits; it's an additional safety
     # layer. A production integration could wrap gateway.pay() with a limit check.
 
 USDC on Arc Testnet: 0x3600000000000000000000000000000000000000

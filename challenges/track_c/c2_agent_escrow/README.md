@@ -12,18 +12,18 @@ A Vyper escrow factory. Each job gets its own contract instance deployed via the
 
 ### Key Functions
 
-- `deposit(job_id, payee, amount, spec_hash)` — payer deposits USDC and sets the agreed spec hash
-- `submit_delivery(job_id, delivery_hash)` — provider submits a hash of their deliverable
-- `confirm_release(job_id)` — verifier confirms the delivery matches, releasing funds to provider
-- `challenge(job_id)` — verifier or payer challenges the delivery
-- `force_release(job_id)` — callable after timeout expires with no verifier action; releases funds to provider
-- `arbiter_resolve(job_id, release)` — arbiter makes a final decision on a challenged job
+- `deposit(job_id, payee, amount, spec_hash)`: payer deposits USDC and sets the agreed spec hash
+- `submit_delivery(job_id, delivery_hash)`: provider submits a hash of their deliverable
+- `confirm_release(job_id)`: verifier confirms the delivery matches, releasing funds to provider
+- `challenge(job_id)`: verifier or payer challenges the delivery
+- `force_release(job_id)`: callable after timeout expires with no verifier action; releases funds to provider
+- `arbiter_resolve(job_id, release)`: arbiter makes a final decision on a challenged job
 
 The verifier can be a multisig, an oracle, or a second AI agent. The contract enforces only that funds cannot move without the verification step completing or the timeout expiring.
 
 ## What This Enables Beyond Vanilla x402
 
-x402 settles payment on delivery of an HTTP response. It has no mechanism to verify the quality or correctness of what was delivered. This contract holds payment in escrow until a verification step completes — the trust problem moves from "did the server respond?" to "did the server deliver what was agreed?"
+x402 settles payment on delivery of an HTTP response. It has no mechanism to verify the quality or correctness of what was delivered. This contract holds payment in escrow until a verification step completes. The trust problem moves from "did the server respond?" to "did the server deliver what was agreed?"
 
 ## Product Directions
 
@@ -37,7 +37,7 @@ Fill in `challenge.py` with functions that interact with `contracts/AgentEscrow.
 
 ## Hints
 
-- `spec_hash` and `delivery_hash` are `bytes32` — use `b'\x01' + b'\x00' * 31` for test values
+- `spec_hash` and `delivery_hash` are `bytes32`. Use `b'\x01' + b'\x00' * 31` for test values
 - Use `boa.env.prank(address)` to switch between payer, provider, and verifier
 - USDC uses 6 decimals (1 USDC = 1_000_000)
 - Read `contracts/AgentEscrow.vy` before coding

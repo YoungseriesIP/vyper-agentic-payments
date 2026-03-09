@@ -1,6 +1,6 @@
 # B1. Get a Circle API Key
 
-Create a Circle developer account and generate an API key. No code to write — just account setup.
+Create a Circle developer account and generate an API key. No code to write, just account setup.
 
 ## Steps
 

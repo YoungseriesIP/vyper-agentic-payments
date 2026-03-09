@@ -1,8 +1,8 @@
-# Track C — Advanced Challenges
+# Track C: Advanced Challenges
 
 Five contract primitives. Each one extends what vanilla x402 can do. Pick one or more.
 
-The ERC-8004 Vyper reference implementation is available as a Moccasin dependency (see Track A setup). Import and extend it where relevant. Each challenge is an independent contract — you don't need to complete them in order.
+The ERC-8004 Vyper reference implementation is available as a Moccasin dependency (see Track A setup). Import and extend it where relevant. Each challenge is an independent contract; you don't need to complete them in order.
 
 Circle integration is optional in this track. If you want to wire up a Circle Programmable Wallet as the agent, use the patterns from Track B.
 

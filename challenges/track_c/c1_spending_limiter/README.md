@@ -8,14 +8,14 @@ A Vyper contract that sits between an agent wallet and its USDC. It enforces:
 - A per-recipient cap
 - An allowlist of recipient addresses
 
-All three on every outgoing transfer, at the contract layer. If the daily cap is hit, outgoing transfers halt until the owner co-signs a resumption — the agent cannot unilaterally resume.
+All three on every outgoing transfer, at the contract layer. If the daily cap is hit, outgoing transfers halt until the owner co-signs a resumption. The agent cannot unilaterally resume.
 
 ### Key Functions
 
-- `authorize_spend(recipient, amount)` — agent requests a transfer; contract checks all three constraints
-- `set_limit(agent, amount, window)` — owner configures the rolling budget for an agent
-- `emergency_pause(agent)` — owner halts all outgoing transfers for an agent immediately
-- `resume(agent)` — owner co-signs to resume transfers after a pause or cap hit
+- `authorize_spend(recipient, amount)`: agent requests a transfer; contract checks all three constraints
+- `set_limit(agent, amount, window)`: owner configures the rolling budget for an agent
+- `emergency_pause(agent)`: owner halts all outgoing transfers for an agent immediately
+- `resume(agent)`: owner co-signs to resume transfers after a pause or cap hit
 
 ### Design Decision
 
@@ -23,7 +23,7 @@ What happens when an agent is at 49.9 USDC of a 50 USDC daily cap and tries to t
 
 ## What This Enables Beyond Vanilla x402
 
-x402 enforces payment at the protocol layer but has no opinion on how much an agent is allowed to spend. That enforcement lives in application code today — a runtime setting, an SDK config, a server-side check. A SpendingLimiter moves that constraint on-chain, independent of whatever the agent code does or whatever state the runtime is in.
+x402 enforces payment at the protocol layer but has no opinion on how much an agent is allowed to spend. That enforcement lives in application code today: a runtime setting, an SDK config, a server-side check. A SpendingLimiter moves that constraint on-chain, independent of whatever the agent code does or whatever state the runtime is in.
 
 ## Product Directions
 

@@ -10,7 +10,7 @@ Using the `IdentityRegistry` from the dependency added in A1:
 2. Call `register` to register the contract you deployed in A2 as an agent, including a metadata URI pointing to a JSON file describing what it does
 3. Verify the registration by calling `ownerOf` with the returned token ID
 
-This is the same pattern Track C contracts follow — registering contract instances as agents gives them a verifiable on-chain identity that other contracts and off-chain tooling can resolve.
+This is the same pattern Track C contracts follow. Registering contract instances as agents gives them a verifiable on-chain identity that other contracts and off-chain tooling can resolve.
 
 ## Key Functions
 
@@ -26,7 +26,7 @@ registry = boa.load(
     "AGENT",          # _symbol
 )
 
-# Register an agent — mints an NFT to msg.sender, returns the token ID
+# Register an agent (mints an NFT to msg.sender, returns the token ID)
 agent_id = registry.register("ipfs://QmYourMetadataHash...")
 
 # Verify ownership
@@ -42,14 +42,14 @@ value = registry.getMetadata(agent_id, "description")
 
 Fill in `challenge.py`:
 
-1. `deploy_registry()` — deploy the IdentityRegistry and return the instance
-2. `register_agent(registry, owner, metadata_uri)` — register an agent and return the token ID
-3. `verify_registration(registry, agent_id, expected_owner)` — verify ownership and return the owner address
+1. `deploy_registry()`: deploy the IdentityRegistry and return the instance
+2. `register_agent(registry, owner, metadata_uri)`: register an agent and return the token ID
+3. `verify_registration(registry, agent_id, expected_owner)`: verify ownership and return the owner address
 
 ## Hints
 
 - The IdentityRegistry constructor takes `_name: String[25]` and `_symbol: String[5]`
-- `register()` mints to `msg.sender` — use `boa.env.prank(owner)` to set the caller
+- `register()` mints to `msg.sender`, so use `boa.env.prank(owner)` to set the caller
 - Agent IDs are 1-based (first registration returns 1)
 - The `register` function accepts an optional `tokenURI` string and optional metadata entries
 

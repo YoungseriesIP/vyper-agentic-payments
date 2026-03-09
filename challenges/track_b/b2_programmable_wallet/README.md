@@ -1,6 +1,6 @@
 # B2. Provision a Circle Programmable Wallet
 
-Create a Developer-Controlled Wallet on Arc testnet and fund it. No code to write — use the Circle Developer Console or the Circle API directly.
+Create a Developer-Controlled Wallet on Arc testnet and fund it. No code to write; use the Circle Developer Console or the Circle API directly.
 
 ## Steps
 
@@ -14,8 +14,8 @@ Create a Developer-Controlled Wallet on Arc testnet and fund it. No code to writ
 
 You will need these values for B3 and B4:
 
-- **Wallet ID** — the UUID assigned by Circle (e.g., `"a1b2c3d4-..."`)
-- **Wallet address** — the on-chain address (e.g., `"0x..."`)
+- **Wallet ID**: the UUID assigned by Circle (e.g., `"a1b2c3d4-..."`)
+- **Wallet address**: the on-chain address (e.g., `"0x..."`)
 
 ## Checkpoint
 

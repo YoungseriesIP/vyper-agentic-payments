@@ -3,11 +3,11 @@
 An AI agent offering paid API services via Circle Gateway x402 micropayments.
 
 This example demonstrates the full ERC-8004 agentic payment flow:
-1. **Agent Discovery** — Clients query agent capabilities (free)
-2. **Reputation Check** — Clients verify agent quality (simulated, would read from AgentReputation.vy)
-3. **x402 Payment** — Clients pay for services via gasless micropayments
-4. **Service Delivery** — Agent provides the paid service
-5. **Reputation Feedback** — Clients rate the agent (simulated, would write to AgentReputation.vy)
+1. **Agent Discovery**: Clients query agent capabilities (free)
+2. **Reputation Check**: Clients verify agent quality (simulated, would read from AgentReputation.vy)
+3. **x402 Payment**: Clients pay for services via gasless micropayments
+4. **Service Delivery**: Agent provides the paid service
+5. **Reputation Feedback**: Clients rate the agent (simulated, would write to AgentReputation.vy)
 
 ## Prerequisites
 

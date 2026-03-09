@@ -9,8 +9,8 @@
 AGENTIC PATTERN:
     x402 generates one on-chain transaction per API call. An agent session
     with hundreds of calls generates hundreds of transactions. A payment
-    channel collapses the entire session into two on-chain transactions —
-    open and close — regardless of how many calls happened in between.
+    channel collapses the entire session into two on-chain transactions
+    (open and close) regardless of how many calls happened in between.
 
 CHANNEL LIFECYCLE:
     OPEN (0) → CHALLENGED (1) → CLOSED (2)
@@ -23,7 +23,7 @@ INVARIANTS:
     - finalize cannot succeed before the challenge window closes
     - reclaim cannot succeed before expiry
     - higher_amount in challenge must be strictly greater than the contested amount
-    - Signature verification uses ecrecover — validate the signer matches
+    - Signature verification uses ecrecover. Validate the signer matches
       the expected party before accepting any state update
 
 USDC on Arc Testnet: 0x3600000000000000000000000000000000000000
@@ -157,7 +157,7 @@ def cooperative_close(channel_id: uint256, amount: uint256, payer_sig: Bytes[65]
     @param payer_sig Payer's signature over the final state
     @param payee_sig Payee's signature over the final state
     @dev Both signatures must validate against the channel's payer and payee.
-         Channel closes immediately — no challenge period needed.
+         Channel closes immediately; no challenge period needed.
     """
     pass
 

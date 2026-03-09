@@ -1,4 +1,4 @@
-# Track B — Circle Integration
+# Track B: Circle Integration
 
 Walk through Circle's products on Arc: API key, programmable wallet, contract deployment, x402 payment. Each step builds on the previous.
 

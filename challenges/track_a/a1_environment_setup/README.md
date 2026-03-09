@@ -1,6 +1,6 @@
 # A1. Environment Setup
 
-Install tools and fund a wallet on Arc testnet. No code to write — just configuration.
+Install tools and fund a wallet on Arc testnet. No code to write, just configuration.
 
 ## Steps
 

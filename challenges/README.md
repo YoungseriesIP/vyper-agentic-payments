@@ -8,9 +8,9 @@ Three tracks for Circle's hackathon on Arc. All contracts deploy to Arc testnet 
 
 ## Tracks
 
-### Track A — Vyper on Arc
+### Track A: Vyper on Arc
 
-Write, deploy, and interact with Vyper contracts on Arc. No Circle SDK required — just Vyper, Moccasin, and the chain.
+Write, deploy, and interact with Vyper contracts on Arc. No Circle SDK required, just Vyper, Moccasin, and the chain.
 
 | Step | Name | Type |
 |------|------|------|
@@ -19,7 +19,7 @@ Write, deploy, and interact with Vyper contracts on Arc. No Circle SDK required 
 | A3 | Write a test suite | Code challenge |
 | A4 | Register your contract as an ERC-8004 agent | Code challenge |
 
-### Track B — Circle Integration
+### Track B: Circle Integration
 
 Walk through Circle's products on Arc: API key, programmable wallet, contract deployment, x402 payment. Each step builds on the previous.
 
@@ -30,9 +30,9 @@ Walk through Circle's products on Arc: API key, programmable wallet, contract de
 | B3 | Deploy a Vyper contract from your Circle Wallet | Code challenge |
 | B4 | Make an x402 payment on-chain | Code challenge |
 
-### Track C — Advanced Challenges
+### Track C: Advanced Challenges
 
-Five contract primitives that extend what vanilla x402 can do. Each is an independent contract — pick one or more, complete in any order.
+Five contract primitives that extend what vanilla x402 can do. Each is an independent contract; pick one or more, complete in any order.
 
 | Step | Name | Contract |
 |------|------|----------|
@@ -68,8 +68,8 @@ challenges/
 ```
 
 Each challenge directory contains:
-- `README.md` — instructions, spec, and hints
-- `challenge.py` — template with `TODO` placeholders (code challenges only)
+- `README.md`: instructions, spec, and hints
+- `challenge.py`: template with `TODO` placeholders (code challenges only)
 
 ---
 
@@ -124,8 +124,8 @@ Vyper convention is `snek_case` for all identifiers. Use it throughout.
 - [Circle developer docs](https://developers.circle.com)
 - [x402 protocol spec](https://x402.org)
 - [Vyper documentation](https://docs.vyperlang.org)
-- [Moccasin](https://cyfrin.github.io/moccasin/) — Vyper project framework
-- [Titanoboa](https://github.com/vyperlang/titanoboa) — Vyper interpreter for local testing
-- [circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk) — Python SDK for x402 with Circle Gateway
-- [erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper) — Vyper reference implementation of ERC-8004
+- [Moccasin](https://cyfrin.github.io/moccasin/): Vyper project framework
+- [Titanoboa](https://github.com/vyperlang/titanoboa): Vyper interpreter for local testing
+- [circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk): Python SDK for x402 with Circle Gateway
+- [erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper): Vyper reference implementation of ERC-8004
 - [EIP-8004 spec](https://eips.ethereum.org/EIPS/eip-8004)

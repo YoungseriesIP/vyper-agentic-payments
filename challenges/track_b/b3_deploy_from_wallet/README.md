@@ -21,9 +21,9 @@ export CIRCLE_ENTITY_SECRET="your-entity-secret"
 
 Fill in `challenge.py`:
 
-1. `create_signer(wallet_id, wallet_address)` — create a `CircleWalletSigner` instance
-2. `create_tx_executor(wallet_id, wallet_address)` — create a `CircleTxExecutor` instance
-3. `deploy_vault_from_circle_wallet(signer, tx_executor)` — configure boa with the signer, set the Arc testnet RPC, and deploy `contracts/Vault.vy`
+1. `create_signer(wallet_id, wallet_address)`: create a `CircleWalletSigner` instance
+2. `create_tx_executor(wallet_id, wallet_address)`: create a `CircleTxExecutor` instance
+3. `deploy_vault_from_circle_wallet(signer, tx_executor)`: configure boa with the signer, set the Arc testnet RPC, and deploy `contracts/Vault.vy`
 
 ## Hints
 

@@ -130,7 +130,7 @@ def require_payment(price: str):
 
 @app.route("/")
 def index():
-    """Agent Discovery (free) — ERC-8004 style metadata."""
+    """Agent Discovery (free). ERC-8004 style metadata."""
     return jsonify(
         {
             "success": True,
@@ -159,7 +159,7 @@ def health():
 
 @app.route("/api/analyze")
 def analyze():
-    """Data Analysis ($0.01) — protected by x402."""
+    """Data Analysis ($0.01), protected by x402."""
     result = require_payment("$0.01")
     if not isinstance(result, PaymentInfo):
         return result  # 402 response
@@ -200,7 +200,7 @@ def analyze():
 
 @app.route("/api/generate", methods=["POST"])
 def generate():
-    """Content Generation ($0.05) — protected by x402."""
+    """Content Generation ($0.05), protected by x402."""
     result = require_payment("$0.05")
     if not isinstance(result, PaymentInfo):
         return result  # 402 response

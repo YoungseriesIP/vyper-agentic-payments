@@ -6,7 +6,7 @@ A Vyper PaymentSplitter where:
 
 - Recipients and shares in basis points are set at deploy time (shares must sum to exactly 10000)
 - `distribute(amount)` sends each recipient their proportional share atomically in one transaction
-- A pull variant: `accrue(amount)` increments each recipient's claimable balance; recipients call `claim()` themselves — avoids the failure mode where one recipient is a contract that reverts on receive
+- A pull variant: `accrue(amount)` increments each recipient's claimable balance; recipients call `claim()` themselves. This avoids the failure mode where one recipient is a contract that reverts on receive
 - Owner can update shares behind a timelock: `propose_split_update(new_recipients, new_shares)` queues a change for N blocks; the change cannot apply mid-session
 - One event per recipient per distribution with the exact amount sent
 
@@ -16,7 +16,7 @@ Document explicitly where the remainder goes when `amount` does not divide evenl
 
 ## What This Enables Beyond Vanilla x402
 
-x402 sends payment to one address. Splitting that payment across multiple recipients — a platform fee, a provider, a referrer — requires either multiple transactions or an intermediary. This contract makes multi-party splits atomic and auditable in a single on-chain transaction.
+x402 sends payment to one address. Splitting that payment across multiple recipients (a platform fee, a provider, a referrer) requires either multiple transactions or an intermediary. This contract makes multi-party splits atomic and auditable in a single on-chain transaction.
 
 ## Product Directions
 
