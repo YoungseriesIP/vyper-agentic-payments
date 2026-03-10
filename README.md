@@ -101,15 +101,44 @@ The scaffold contracts have known issues by design; finding and fixing them is p
 
 Entry point: [challenges/track_c/README.md](challenges/track_c/README.md)
 
-## Arc Testnet
+## Supported Networks
 
-| Parameter | Value |
-|-----------|-------|
-| Chain ID | `5042002` |
-| RPC | `https://rpc.testnet.arc.circle.com` |
-| USDC | `0x3600000000000000000000000000000000000000` |
-| Explorer | <https://explorer.testnet.arc.circle.com> |
-| Faucet | <https://faucet.circle.com> |
+All networks below are supported by circle-titanoboa-sdk V2.
+
+### Testnets
+
+| Network | Chain ID | RPC | USDC Address |
+|---------|----------|-----|--------------|
+| Arc Testnet | `5042002` | `https://arc-testnet.drpc.org` | `0x3600000000000000000000000000000000000000` |
+| Base Sepolia | `84532` | `https://sepolia.base.org` | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` |
+| Ethereum Sepolia | `11155111` | `https://sepolia.drpc.org` | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` |
+| Avalanche Fuji | `43113` | `https://api.avax-test.network/ext/bc/C/rpc` | `0x5425890298aed601595a70AB815c96711a31Bc65` |
+| HyperEVM Testnet | `998` | `https://rpc.hyperliquid-testnet.xyz/evm` | `0x2B3370eE501B4a559b57D449569354196457D8Ab` |
+| Sonic Testnet | `14601` | `https://rpc.testnet.soniclabs.com` | `0x0BA304580ee7c9a980CF72e55f5Ed2E9fd30Bc51` |
+| World Chain Sepolia | `4801` | `https://worldchain-sepolia.g.alchemy.com/public` | `0x66145f38cBAC35Ca6F1Dfb4914dF98F1614aeA88` |
+| Sei Atlantic Testnet | `1328` | `https://evm-rpc-testnet.sei-apis.com` | `0x4fCF1784B31630811181f670Aea7A7bEF803eaED` |
+| Arbitrum Sepolia | `421614` | `https://sepolia-rollup.arbitrum.io/rpc` | `0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d` |
+| Optimism Sepolia | `11155420` | `https://sepolia.optimism.io` | `0x5fd84259d66Cd46123540766Be93DFE6D43130D7` |
+| Polygon Amoy | `80002` | `https://rpc-amoy.polygon.technology` | `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582` |
+| Unichain Sepolia | `1301` | `https://sepolia.unichain.org` | `0x31d0220469e10c4E71834a79b1f276d740d3768F` |
+
+### Mainnets
+
+| Network | Chain ID | RPC | USDC Address |
+|---------|----------|-----|--------------|
+| Ethereum | `1` | `https://eth.drpc.org` | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
+| Base | `8453` | `https://mainnet.base.org` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| Arbitrum One | `42161` | `https://arb1.arbitrum.io/rpc` | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
+| Polygon | `137` | `https://polygon.drpc.org` | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` |
+| Optimism | `10` | `https://mainnet.optimism.io` | `0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85` |
+| Avalanche C-Chain | `43114` | `https://api.avax.network/ext/bc/C/rpc` | `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E` |
+| Sonic | `146` | `https://rpc.soniclabs.com` | `0x29219dd400f2Bf60E5a23d13Be72B486D4038894` |
+| Unichain | `130` | `https://mainnet.unichain.org` | `0x078D782b760474a361dDA0AF3839290b0EF57AD6` |
+| World Chain | `480` | `https://worldchain-mainnet.g.alchemy.com/public` | `0x79A02482A880bCe3F13E09da970dC34dB4cD24D1` |
+| HyperEVM | `999` | `https://rpc.hyperliquid.xyz/evm` | `0xb88339CB7199b77E23DB6E890353E22632Ba630f` |
+| Sei | `1329` | `https://evm-rpc.sei-apis.com` | `0xe15fC38F6D8c56aF07bbCBe3BAf5708A2Bf42392` |
+
+Faucet: <https://faucet.circle.com>
 
 ## Project Structure
 
