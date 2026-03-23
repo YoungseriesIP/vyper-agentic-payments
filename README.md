@@ -12,6 +12,10 @@ Vyper smart contracts and hackathon challenges for agentic payment workflows on 
 [![Vyper](https://img.shields.io/badge/vyper-0.4.x-blue)](https://vyperlang.org)
 [![Arc Testnet](https://img.shields.io/badge/chain-Arc%20Testnet-purple)](https://developers.circle.com/w3s/arc)
 
+## How These Repos Relate
+
+[erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper) implements agent identity — ERC-721 NFTs, on-chain reputation, and validation logic. [circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk) (circlekit) handles gasless USDC payments and x402 integration. This repo provides payment contracts and hackathon challenges that build on both.
+
 ## Tracks
 
 | Track | Focus | Needs Circle account? |
@@ -62,7 +66,7 @@ Connect to Circle's infrastructure: get an API key, provision a programmable wal
 
 You need all of these before B3/B4 will work:
 
-1. Complete Track A first (you need a funded Arc testnet wallet)
+1. Complete Track A first (you need a funded Arc Testnet wallet)
 2. Create a free Circle developer account at <https://console.circle.com>
 3. From the Console: generate a `CIRCLE_API_KEY` and `CIRCLE_ENTITY_SECRET`
 4. Copy `.env.example` to `.env` and fill in both values

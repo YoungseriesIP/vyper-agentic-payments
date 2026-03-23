@@ -23,13 +23,13 @@ Fill in `challenge.py`:
 
 1. `create_signer(wallet_id, wallet_address)`: create a `CircleWalletSigner` instance
 2. `create_tx_executor(wallet_id, wallet_address)`: create a `CircleTxExecutor` instance
-3. `deploy_vault_from_circle_wallet(signer, tx_executor)`: configure boa with the signer, set the Arc testnet RPC, and deploy `contracts/Vault.vy`
+3. `deploy_vault_from_circle_wallet(signer, tx_executor)`: configure boa with the signer, set the Arc Testnet RPC, and deploy `contracts/Vault.vy`
 
 ## Hints
 
 - `CircleWalletSigner` and `CircleTxExecutor` read `CIRCLE_API_KEY` and `CIRCLE_ENTITY_SECRET` from the environment automatically
-- Use `boa.set_network_env("https://arc-testnet.drpc.org")` to point at Arc testnet
-- The USDC address on Arc testnet is `0x3600000000000000000000000000000000000000`
+- Use `boa.set_network_env(os.getenv("ARC_TESTNET_RPC"))` to point at Arc Testnet (set `ARC_TESTNET_RPC` in your `.env`)
+- The USDC address on Arc Testnet is `0x3600000000000000000000000000000000000000`
 
 ## Checkpoint
 

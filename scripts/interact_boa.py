@@ -30,7 +30,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONTRACTS_DIR = PROJECT_ROOT / "contracts"
 DEPLOYMENTS_FILE = PROJECT_ROOT / "deployments.json"
 
-ARC_TESTNET_RPC = os.getenv("ARC_TESTNET_RPC", "https://arc-testnet.drpc.org")
+ARC_TESTNET_RPC = os.getenv("ARC_TESTNET_RPC")
+if not ARC_TESTNET_RPC:
+    print("Error: ARC_TESTNET_RPC not set.")
+    print("See .env.example for setup instructions.")
+    sys.exit(1)
 ARC_TESTNET_CHAIN_ID = str(int(os.getenv("ARC_TESTNET_CHAIN_ID", "5042002")))
 
 

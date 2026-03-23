@@ -1,6 +1,6 @@
 # Hackathon Challenges
 
-Three tracks for Circle's hackathon on Arc. All contracts deploy to Arc testnet (Chain ID: `5042002`). USDC is the native gas token. The native USDC address is `0x3600000000000000000000000000000000000000`.
+Three tracks for Circle's hackathon on Arc. All contracts deploy to Arc Testnet (Chain ID: `5042002`). USDC is the native gas token. The native USDC address is `0x3600000000000000000000000000000000000000`.
 
 > **Decimal note:** Arc's native USDC balance uses 18 decimals. The ERC-20 interface uses 6. Do not mix these.
 
@@ -89,7 +89,7 @@ Each challenge directory contains:
    circle-titanoboa-sdk = { git = "https://github.com/lufa23/circle-titanoboa-sdk" }
    ```
 
-3. **Fund a wallet** from the [Arc testnet faucet](https://faucet.circle.com) (20 USDC per 2 hours per address)
+3. **Fund a wallet** from the [Arc Testnet faucet](https://faucet.circle.com) (20 USDC per 2 hours per address)
 
 4. **Verify your balance** on the [Arc block explorer](https://explorer.arc.network)
 
@@ -119,7 +119,7 @@ Vyper convention is `snek_case` for all identifiers. Use it throughout.
 ## Resources
 
 - [Arc documentation](https://docs.arc.network)
-- [Arc testnet faucet](https://faucet.circle.com)
+- [Arc Testnet faucet](https://faucet.circle.com)
 - [Arc block explorer](https://explorer.arc.network)
 - [Circle developer docs](https://developers.circle.com)
 - [x402 protocol spec](https://x402.org)

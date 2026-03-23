@@ -2,7 +2,7 @@
 
 """
 @title Vault
-@notice Minimal USDC deposit/withdraw contract for Arc testnet.
+@notice Minimal USDC deposit/withdraw contract for Arc Testnet.
 @dev Track A2 challenge contract. Accepts deposits from any caller,
      stores per-depositor balances, and restricts withdrawals to
      the original depositor.

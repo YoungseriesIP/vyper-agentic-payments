@@ -92,7 +92,7 @@ Contracts use descriptive revert messages:
 
 ## Testing
 
-Each contract has comprehensive tests:
+Each contract has tests:
 
 ```bash
 # Run all tests for a contract

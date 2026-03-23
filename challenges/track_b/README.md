@@ -15,7 +15,7 @@ You will need a Circle developer account. The free tier is sufficient for all st
 
 ## Prerequisites
 
-- A funded wallet on Arc testnet (complete Track A1 first)
+- A funded wallet on Arc Testnet (complete Track A1 first)
 - A [Circle Developer Console](https://console.circle.com) account (free tier)
 - The `circlekit` SDK installed:
 

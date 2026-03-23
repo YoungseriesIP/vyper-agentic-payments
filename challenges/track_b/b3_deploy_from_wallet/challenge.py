@@ -2,7 +2,7 @@
 B3. Deploy a Vyper Contract from Your Circle Wallet
 
 Use CircleWalletSigner and CircleTxExecutor to deploy contracts/Vault.vy
-from a Developer-Controlled Wallet on Arc testnet.
+from a Developer-Controlled Wallet on Arc Testnet.
 
 Environment variables required:
   CIRCLE_API_KEY
@@ -18,7 +18,7 @@ import boa
 from circlekit import GatewayClient
 from circlekit.wallets import CircleWalletSigner, CircleTxExecutor
 
-ARC_TESTNET_RPC = "https://arc-testnet.drpc.org"
+ARC_TESTNET_RPC = os.getenv("ARC_TESTNET_RPC", "")
 ARC_USDC_ADDRESS = "0x3600000000000000000000000000000000000000"
 
 
@@ -57,11 +57,11 @@ def deploy_vault_from_circle_wallet(
     tx_executor: CircleTxExecutor,
 ):
     """
-    Deploy contracts/Vault.vy to Arc testnet from your Circle Wallet.
+    Deploy contracts/Vault.vy to Arc Testnet from your Circle Wallet.
 
     Steps:
       1. Create a GatewayClient with the signer and tx_executor
-      2. Set the network to Arc testnet RPC
+      2. Set the network to Arc Testnet RPC
       3. Deploy contracts/Vault.vy with the Arc USDC address
 
     Args:
