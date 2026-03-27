@@ -14,7 +14,9 @@ Vyper smart contracts and hackathon challenges for agentic payment workflows on 
 
 ## How These Repos Relate
 
-[erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper) implements agent identity — ERC-721 NFTs, on-chain reputation, and validation logic. [circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk) (circlekit) handles gasless USDC payments and x402 integration. This repo provides payment contracts and hackathon challenges that build on both.
+[erc-8004-vyper](https://github.com/lufa23/erc-8004-vyper) implements agent identity: ERC-721 NFTs, on-chain reputation, and validation logic. 
+[circle-titanoboa-sdk](https://github.com/lufa23/circle-titanoboa-sdk) (circlekit) handles gasless USDC payments and x402 integration. 
+This repo provides payment contracts and hackathon challenges that build on both.
 
 ## Tracks
 
