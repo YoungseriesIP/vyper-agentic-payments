@@ -113,7 +113,7 @@ All networks below are supported by circle-titanoboa-sdk V2.
 
 | Network | Chain ID | RPC | USDC Address |
 |---------|----------|-----|--------------|
-| Arc Testnet | `5042002` | `https://arc-testnet.drpc.org` | `0x3600000000000000000000000000000000000000` |
+| Arc Testnet | `5042002` | [See providers](https://docs.arc.network/arc/tools/node-providers) | `0x3600000000000000000000000000000000000000` |
 | Base Sepolia | `84532` | `https://sepolia.base.org` | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` |
 | Ethereum Sepolia | `11155111` | `https://sepolia.drpc.org` | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` |
 | Avalanche Fuji | `43113` | `https://api.avax-test.network/ext/bc/C/rpc` | `0x5425890298aed601595a70AB815c96711a31Bc65` |
