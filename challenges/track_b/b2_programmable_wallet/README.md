@@ -1,10 +1,10 @@
 # B2. Provision a Circle Programmable Wallet
 
-Create a Developer-Controlled Wallet on Arc testnet and fund it. No code to write; use the Circle Developer Console or the Circle API directly.
+Create a Developer-Controlled Wallet on Arc Testnet and fund it. No code to write; use the Circle Developer Console or the Circle API directly.
 
 ## Steps
 
-1. **Create a Developer-Controlled Wallet** on Arc testnet via the [Circle Developer Console](https://console.circle.com) or the Circle API
+1. **Create a Developer-Controlled Wallet** on Arc Testnet via the [Circle Developer Console](https://console.circle.com) or the Circle API
 
 2. **Fund it** from your Track A faucet wallet by sending USDC to the wallet address
 

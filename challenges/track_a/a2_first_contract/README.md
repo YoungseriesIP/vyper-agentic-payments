@@ -1,6 +1,6 @@
 # A2. Deploy Your First Vyper Contract
 
-Write and deploy a minimal Vyper contract to Arc testnet.
+Write and deploy a minimal Vyper contract to Arc Testnet.
 
 ## Spec
 

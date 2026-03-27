@@ -230,14 +230,12 @@ def contracts():
             "lib/github/lufa23/erc-8004-vyper/src/reputation_registry.vy",
             identity.address,
         )
-        # FIXED arg order: usdc_address first, then identity_registry
         escrow = boa.load("contracts/AgentEscrow.vy", usdc.address, identity.address)
 
     return {
         "usdc": usdc,
         "identity": identity,
         "reputation": reputation,
-        "validation": validation,
         "escrow": escrow,
         "deployer": deployer,
     }

@@ -1,6 +1,6 @@
 # A1. Environment Setup
 
-Install tools and fund a wallet on Arc testnet. No code to write, just configuration.
+Install tools and fund a wallet on Arc Testnet. No code to write, just configuration.
 
 ## Steps
 
@@ -10,15 +10,15 @@ Install tools and fund a wallet on Arc testnet. No code to write, just configura
    pip install moccasin
    ```
 
-2. **Configure Arc testnet** in `moccasin.toml`
+2. **Configure Arc Testnet** in `moccasin.toml`
 
-   Arc testnet details:
+   Arc Testnet details:
    - Chain ID: `5042002`
-   - RPC: `https://arc-testnet.drpc.org`
+   - RPC: set `ARC_TESTNET_RPC` in your `.env` (see `.env.example`)
    - Native gas token: USDC
    - USDC address: `0x3600000000000000000000000000000000000000`
 
-3. **Fund a wallet** from the [Arc testnet faucet](https://faucet.circle.com)
+3. **Fund a wallet** from the [Arc Testnet faucet](https://faucet.circle.com)
 
    The faucet provides 20 USDC per 2 hours per address.
 

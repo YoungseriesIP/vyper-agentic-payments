@@ -11,7 +11,7 @@ The system is organized into 5 distinct layers:
 The foundation layer is Circle's Arc Testnet:
 
 - **Chain ID**: 5042002
-- **RPC**: https://rpc.testnet.arc.circle.com
+- **RPC**: Set `ARC_TESTNET_RPC` in your `.env` (see `.env.example`)
 - **Native USDC**: 0x3600000000000000000000000000000000000000
 - **Block Explorer**: https://explorer.testnet.arc.circle.com
 

@@ -8,7 +8,7 @@ Create a Circle developer account and generate an API key. No code to write, jus
 
 2. **Generate an API key** from the Console dashboard
 
-3. **Confirm access** to the Arc testnet environment in the Console
+3. **Confirm access** to the Arc Testnet environment in the Console
 
 ## Environment Variables
 

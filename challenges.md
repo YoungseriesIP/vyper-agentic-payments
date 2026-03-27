@@ -2,7 +2,7 @@
 
 This repo is the Vyper track for Circle's hackathon on Arc. Three tracks: a Vyper onboarding track, a Circle product integration track, and an advanced track with five contract primitives to build.
 
-All contracts deploy to Arc testnet (Chain ID: `5042002`). USDC is the native gas token. The native USDC address is `0x3600000000000000000000000000000000000000`.
+All contracts deploy to Arc Testnet (Chain ID: `5042002`). USDC is the native gas token. The native USDC address is `0x3600000000000000000000000000000000000000`.
 
 > **Decimal note:** Arc's native USDC balance uses 18 decimals. The ERC-20 interface uses 6. Do not mix these.
 
@@ -27,8 +27,8 @@ circle-titanoboa-sdk = { git = "https://github.com/lufa23/circle-titanoboa-sdk" 
 ### A1. Environment setup
 
 - Install Moccasin and Vyper
-- Configure Arc testnet in `moccasin.toml`
-- Fund a wallet from the [Arc testnet faucet](https://faucet.circle.com) (20 USDC per 2 hours per address)
+- Configure Arc Testnet in `moccasin.toml`
+- Fund a wallet from the [Arc Testnet faucet](https://faucet.circle.com) (20 USDC per 2 hours per address)
 - Verify your balance on the [Arc block explorer](https://explorer.arc.network)
 
 **Checkpoint:** Your wallet has a non-zero USDC balance on Arc.
@@ -37,7 +37,7 @@ circle-titanoboa-sdk = { git = "https://github.com/lufa23/circle-titanoboa-sdk" 
 
 ### A2. Deploy your first Vyper contract
 
-Write and deploy a minimal Vyper contract to Arc testnet. The contract should:
+Write and deploy a minimal Vyper contract to Arc Testnet. The contract should:
 
 - Accept a USDC deposit from a caller
 - Store the depositor's address and amount
@@ -87,7 +87,7 @@ You will need a Circle developer account. The free tier is sufficient for all st
 
 - Create an account on the [Circle Developer Console](https://console.circle.com)
 - Generate an API key
-- Confirm access to the Arc testnet environment
+- Confirm access to the Arc Testnet environment
 
 **Checkpoint:** A working API key in the Circle Developer Console.
 
@@ -95,7 +95,7 @@ You will need a Circle developer account. The free tier is sufficient for all st
 
 ### B2. Provision a Circle Programmable Wallet
 
-- Create a Developer-Controlled Wallet on Arc testnet via the Console or the Circle API
+- Create a Developer-Controlled Wallet on Arc Testnet via the Console or the Circle API
 - Fund it from your Track A faucet wallet
 - Confirm the balance in the Console and on the [Arc block explorer](https://explorer.arc.network)
 
@@ -117,7 +117,7 @@ tx_executor = CircleTxExecutor(wallet_id="...", wallet_address="0x...")
 
 client = GatewayClient(chain="arcTestnet", signer=signer, tx_executor=tx_executor)
 
-boa.set_network_env("https://arc-testnet.drpc.org")
+boa.set_network_env(os.getenv("ARC_TESTNET_RPC"))
 contract = boa.load("contracts/Vault.vy")  # your A2 contract
 ```
 
@@ -343,7 +343,7 @@ Scope this in your README: on Arc, with sub-second finality and USDC gas, channe
 ## Submission
 
 - Public GitHub repo
-- Vyper contracts deployable to Arc testnet (Chain ID: `5042002`)
+- Vyper contracts deployable to Arc Testnet (Chain ID: `5042002`)
 - Test suite covering the edge cases in the challenge spec
 - For Track B: a video showing a transaction executed via the Circle Developer Console and confirmed on the Arc block explorer
 - For Track C: a short section in your README explaining what your contract enforces that a purely SDK-level or application-layer approach does not
@@ -353,7 +353,7 @@ Scope this in your README: on Arc, with sub-second finality and USDC gas, channe
 ## Resources
 
 - [Arc documentation](https://docs.arc.network)
-- [Arc testnet faucet](https://faucet.circle.com)
+- [Arc Testnet faucet](https://faucet.circle.com)
 - [Arc block explorer](https://explorer.arc.network)
 - [Circle developer docs](https://developers.circle.com)
 - [Circle developer console](https://console.circle.com)
