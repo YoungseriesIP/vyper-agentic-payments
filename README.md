@@ -18,9 +18,9 @@ Vyper smart contracts and hackathon challenges for agentic payment workflows on 
 
 ## Tracks
 
-| Track | Focus | Needs Circle account? |
+| Track | Focus | Circle developer account? |
 |-------|-------|-----------------------|
-| **A** | Vyper basics: write, test, deploy a vault | No |
+| **A** | Vyper basics: write, test, deploy a USDC vault on Arc | No (uses Arc Testnet + USDC faucet) |
 | **B** | Circle integration: API key, programmable wallet, x402 payment | Yes |
 | **C** | Advanced payment primitives: escrow, limits, splits, subscriptions | Optional |
 
@@ -154,6 +154,7 @@ vyper-agentic-payments/
 │   ├── SpendingLimiter.vy        # Track C: agent spend limits
 │   ├── PaymentSplitter.vy        # Track C: revenue distribution
 │   ├── SubscriptionManager.vy    # Track C: recurring payments
+│   ├── PaymentChannel.vy         # Track C: payment channel (bonus)
 │   └── interfaces/
 │       ├── IERC20.vy
 │       ├── IERC721.vy
