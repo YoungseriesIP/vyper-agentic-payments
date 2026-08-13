@@ -43,7 +43,8 @@ def register_agent(registry, owner: str, metadata_uri: str) -> int:
         agent_id: The newly minted token ID.
     """
     # Implement: as owner, call registry.register(metadata_uri) and return the ID
-    raise NotImplementedError("Call register() as the owner")
+    with boa.env.prank(owner):
+        return registry.register(metadata_uri)
 
 
 def verify_registration(registry, agent_id: int, expected_owner: str) -> str:
@@ -59,4 +60,6 @@ def verify_registration(registry, agent_id: int, expected_owner: str) -> str:
         The owner address from ownerOf().
     """
     # Implement: call registry.ownerOf(agent_id) and assert it matches expected_owner
-    raise NotImplementedError("Verify ownership with ownerOf()")
+    agent_owner = registry.ownerOf(agent_id)
+    assert agent_owner == expected_owner
+    return agent_owner
