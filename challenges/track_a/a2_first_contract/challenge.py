@@ -26,7 +26,7 @@ def deploy_vault(usdc_address: str):
         The deployed Vault contract instance.
     """
     # Implement: deploy contracts/Vault.vy with usdc_address as constructor arg
-    raise NotImplementedError("Deploy the Vault contract with boa.load()")
+    return boa.load("contracts/Vault.vy", usdc_address)
 
 
 def deposit(vault, usdc, depositor: str, amount: int):
@@ -40,7 +40,7 @@ def deposit(vault, usdc, depositor: str, amount: int):
         amount: USDC amount in raw units (6 decimals).
     """
     # Implement: as depositor, approve vault then call vault.deposit(amount)
-    raise NotImplementedError("Approve the vault and call deposit()")
+    with boa.env.prank(depositor): usdc.approve(vault.address, amount); vault.deposit(amount)
 
 
 def withdraw(vault, depositor: str, amount: int):
@@ -53,4 +53,4 @@ def withdraw(vault, depositor: str, amount: int):
         amount: USDC amount in raw units (6 decimals).
     """
     # Implement: as depositor, call vault.withdraw(amount)
-    raise NotImplementedError("Call withdraw() as the depositor")
+    with boa.env.prank(depositor): vault.withdraw(amount)
