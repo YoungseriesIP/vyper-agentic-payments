@@ -28,7 +28,16 @@ def test_deposit_and_withdraw(vault, usdc, depositor: str):
         depositor: Funded address to deposit and withdraw.
     """
     # Implement: deposit some USDC, withdraw it all, assert balances are correct
-    raise NotImplementedError("Write the deposit-and-withdraw happy path test")
+    amount = 100 * 10**6
+    initial_balance = usdc.balanceOf(depositor)
+    with boa.env.prank(depositor):
+        usdc.approve(vault.address, amount)
+        vault.deposit(amount)
+    assert vault.balances(depositor) == amount
+    with boa.env.prank(depositor):
+        vault.withdraw(amount)
+    assert vault.balances(depositor) == 0
+    assert usdc.balanceOf(depositor) == initial_balance
 
 
 def test_non_depositor_reverts(vault, usdc, depositor: str, non_depositor: str):
@@ -46,7 +55,13 @@ def test_non_depositor_reverts(vault, usdc, depositor: str, non_depositor: str):
     """
     # Implement: deposit as depositor, then use boa.reverts() to assert
     # that non_depositor cannot withdraw
-    raise NotImplementedError("Write the non-depositor revert test")
+    amount = 100 * 10**6
+    with boa.env.prank(depositor):
+        usdc.approve(vault.address, amount)
+        vault.deposit(amount)
+    with boa.env.prank(non_depositor):
+        with boa.reverts():
+            vault.withdraw(amount)
 
 
 def test_multiple_deposits(vault, usdc, depositor: str):
@@ -62,4 +77,10 @@ def test_multiple_deposits(vault, usdc, depositor: str):
         depositor: Address making both deposits.
     """
     # Implement: deposit twice, assert vault.balances(depositor) equals the sum
-    raise NotImplementedError("Write the multiple deposits accounting test")
+    amount = 100 * 10**6
+    with boa.env.prank(depositor):
+        usdc.approve(vault.address, amount)
+        vault.deposit(amount)
+        usdc.approve(vault.address, amount)
+        vault.deposit(amount)
+    assert vault.balances(depositor) == amount * 2
