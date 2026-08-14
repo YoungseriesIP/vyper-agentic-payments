@@ -15,7 +15,7 @@ Run test:
 import boa
 
 IDENTITY_REGISTRY_PATH = (
-    "lib/github/lufa23/erc-8004-vyper/src/identity_registry.vy"
+    "lib/github/lufa23/erc-8004-vyper/contracts/IdentityRegistry.vy"
 )
 
 
@@ -27,7 +27,7 @@ def deploy_registry():
         The deployed IdentityRegistry contract instance.
     """
     # Implement: deploy identity_registry.vy with a name and symbol
-    raise NotImplementedError("Deploy the IdentityRegistry with boa.load()")
+    return boa.load("lib/github/lufa23/erc-8004-vyper/contracts/IdentityRegistry.vy")
 
 
 def register_agent(registry, owner: str, metadata_uri: str) -> int:
